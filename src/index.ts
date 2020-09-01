@@ -3,10 +3,15 @@ import { ShadersLoader } from './ShadersLoader';
 import { ShaderObject } from './ShaderObject';
 import {mat4} from 'gl-matrix';
 
+const UISettings = {POINTS: true, LINES: true, LINE_STRIP: true, LINE_LOOP: true, TRIANGLES: true, TRIANGLE_STRIP: true, TRIANGLE_FAN: true};
+let gl:WebGLRenderingContext;
+let programInfo:any;
+let shaderObjects: ShaderObject[] = [];
+
 function main() {
   const canvas = document.createElement('canvas');
   document.querySelector('body').appendChild(canvas);
-  const gl = canvas.getContext('webgl');
+  gl = canvas.getContext('webgl');
 
   // Only continue if WebGL is available and working
   if (gl === null) {
@@ -14,8 +19,11 @@ function main() {
     return;
   }
 
+  const gui = new GUI();
+  initGUI(gui);
+
   const shaders = new ShadersLoader(gl);
-  const programInfo = {
+  programInfo = {
     program: shaders.program,
     attribLocations: {
       vertexPosition: gl.getAttribLocation(shaders.program, 'aVertexPosition'),
@@ -27,10 +35,13 @@ function main() {
     },
   };
 
-  const shaderObjects: ShaderObject[] = [];
   addObjectsToDraw(shaderObjects);
 
   // Draw the scene
+  drawScene(gl, programInfo, shaderObjects);
+}
+
+function redrawScene(){
   drawScene(gl, programInfo, shaderObjects);
 }
 
@@ -62,7 +73,12 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
   // as the destination to receive the result.
   mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
 
+  const primitives = [gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, gl.TRIANGLES, gl.TRIANGLE_STRIP, gl.TRIANGLE_FAN];
+
   shaderObjects.forEach((obj: ShaderObject) => {
+    if(!Object.values(UISettings)[obj.objPrimitive]){
+      return;
+    }
     obj.initBuffers(gl);
     setUpBuffer(2, obj.positionBuffer, programInfo.attribLocations.vertexPosition);
     setUpBuffer(4, obj.colorBuffer, programInfo.attribLocations.vertexColor);
@@ -83,10 +99,8 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
         programInfo.uniformLocations.modelViewMatrix,
         false,
         modelViewMatrix);
-    {
-      const offset = 0;
-      gl.drawArrays(gl.TRIANGLE_STRIP, offset, obj.vertexNum);
-    }
+
+    gl.drawArrays(obj.objPrimitive, 0, obj.vertexNum); // 0 is offset
   });
 
 
@@ -111,7 +125,32 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
 
 }
 
+function initGUI(datGui:GUI){
+  if(datGui == null){
+      return;
+  }
+
+  for (let i = 0; i < Object.keys(UISettings).length; i++) {
+    const UIKey = Object.keys(UISettings)[i];
+    datGui.add(UISettings, UIKey)
+                .name(UIKey)
+                .listen()
+                .onChange(v => redrawScene());
+  }
+
+
+}
+
 function addObjectsToDraw(shaderObjects: ShaderObject[]){
+  const p0 = [0.0, 2.0, 0.0];
+  const p1 = [1.5, 1.5, 0.0];
+  const p2 = [2.0, 0.0, 0.0];
+  const p3 = [1.5, -1.5, 0.0];
+  const p4 = [0.0, -2.0, 0.0];
+  const p5 = [-1.5, -1.5, 0.0];
+  const p6 = [-2.0, 0.0, 0.0];
+  const p7 = [-1.5, 1.5, 0.0];
+
   const square = new ShaderObject(4, [
     -1.0,  1.0,
      1.0,  1.0,
@@ -135,10 +174,26 @@ function addObjectsToDraw(shaderObjects: ShaderObject[]){
     1.0,  0.0,  0.0,  1.0,    // red
     0.0,  1.0,  0.0,  1.0,    // green
   ],
-    [0.0, 0.0, -6.0] // position
+    [0.0, -1.5, -7.0] // position
   );
 
   shaderObjects.push(triangleA);
+
+  const triangle1 = new ShaderObject(3, [
+    0.0,  1.0,
+   -1.0,  -1.0,
+    1.0, -1.0,
+],[
+  1.0,  1.0,  1.0,  1.0,    // white
+  1.0,  0.0,  0.0,  1.0,    // red
+  0.0,  1.0,  0.0,  1.0,    // green
+],
+  [0.0, 1.5, -7.0], // position
+  1,
+);
+
+shaderObjects.push(triangle1);
+
 }
 
 window.onload = main;
