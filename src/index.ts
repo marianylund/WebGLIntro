@@ -137,62 +137,52 @@ function initGUI(datGui:GUI){
                 .listen()
                 .onChange(v => redrawScene());
   }
-
-
 }
 
 function addObjectsToDraw(shaderObjects: ShaderObject[]){
-  const p0 = [0.0, 2.0, 0.0];
-  const p1 = [1.5, 1.5, 0.0];
-  const p2 = [2.0, 0.0, 0.0];
-  const p3 = [1.5, -1.5, 0.0];
-  const p4 = [0.0, -2.0, 0.0];
-  const p5 = [-1.5, -1.5, 0.0];
-  const p6 = [-2.0, 0.0, 0.0];
-  const p7 = [-1.5, 1.5, 0.0];
+  const p0 = [0.0, 2.0];
+  const p1 = [1.5, 1.5];
+  const p2 = [2.0, 0.0];
+  const p3 = [1.5, -1.5];
+  const p4 = [0.0, -2.0];
+  const p5 = [-1.5, -1.5];
+  const p6 = [-2.0, 0.0];
+  const p7 = [-1.5, 1.5];
 
-  const square = new ShaderObject(4, [
-    -1.0,  1.0,
-     1.0,  1.0,
-    -1.0, -1.0,
-     1.0, -1.0,
-  ],[
-    1.0,  1.0,  1.0,  1.0,    // white
-    1.0,  0.0,  0.0,  1.0,    // red
-    0.0,  1.0,  0.0,  1.0,    // green
-    0.0,  0.0,  1.0,  1.0,    // blue
-  ]);
+  const white = [ 1.0,  1.0,  1.0,  1.0];
+  const red = [ 1.0,  0.0,  0.0,  1.0];
+  const green = [ 0.0,  1.0,  0.0,  1.0];
+  const blue = [ 0.0,  0.0,  1.0,  1.0];
 
-  //shaderObjects.push(square);
+  const point0 = new ShaderObject(2, p0.concat(p1), white.concat(red), [0.0, 0.0, 0.0], 0);
+  shaderObjects.push(point0);
 
-  const triangleA = new ShaderObject(3, [
-      0.0,  1.0,
-     -1.0,  -1.0,
-      1.0, -1.0,
-  ],[
-    1.0,  1.0,  1.0,  1.0,    // white
-    1.0,  0.0,  0.0,  1.0,    // red
-    0.0,  1.0,  0.0,  1.0,    // green
-  ],
-    [0.0, -1.5, -7.0] // position
-  );
+  const line1 = new ShaderObject(2, p2.concat(p3), white.concat(red), [2.0, -1.0, -7.0], 1);
+  shaderObjects.push(line1);
 
-  shaderObjects.push(triangleA);
+  const lineStrip2 = new ShaderObject(3, p4.concat(p5).concat(p6), white.concat(red).concat(green), [0.0, 2.5, -7.0], 2);
+  shaderObjects.push(lineStrip2);
+  
+  const lineLoop3 = new ShaderObject(4, p4.concat(p5).concat(p6).concat(p4), white.concat(red).concat(green).concat(blue), [2.0, 2.5, -7.0], 3);
+  shaderObjects.push(lineLoop3);
 
-  const triangle1 = new ShaderObject(3, [
-    0.0,  1.0,
-   -1.0,  -1.0,
-    1.0, -1.0,
-],[
-  1.0,  1.0,  1.0,  1.0,    // white
-  1.0,  0.0,  0.0,  1.0,    // red
-  0.0,  1.0,  0.0,  1.0,    // green
-],
-  [0.0, 1.5, -7.0], // position
-  1,
-);
+  const triangle4 = new ShaderObject(3, p1.concat(p2).concat(p3), red.concat(green).concat(blue), [1.0, 0.5, -7.0], 4);
+  shaderObjects.push(triangle4);
 
-shaderObjects.push(triangle1);
+  const triangle5 = new ShaderObject(3, p1.concat(p2).concat(p3), red.concat(green).concat(blue), [2.0, 0.5, -7.0], 5);
+  shaderObjects.push(triangle5);
+
+  const triangle6 = new ShaderObject(3, p1.concat(p2).concat(p3), red.concat(green).concat(blue), [3.0, 0.5, -7.0], 6);
+  shaderObjects.push(triangle6);
+
+  const square4 = new ShaderObject(4, p1.concat(p3).concat(p5).concat(p7), red.concat(green).concat(blue).concat(white), [1.0, -1.0, -9.0], 4);
+  shaderObjects.push(square4);
+
+  const square5 = new ShaderObject(4, p1.concat(p3).concat(p5).concat(p7), red.concat(green).concat(blue).concat(white), [-2.3, -1.0, -9.0], 5);
+  shaderObjects.push(square5);
+
+  const square6 = new ShaderObject(4, p1.concat(p3).concat(p5).concat(p7), red.concat(green).concat(blue).concat(white), [-5.6, -1.0, -9.0], 6);
+  shaderObjects.push(square6);
 
 }
 
