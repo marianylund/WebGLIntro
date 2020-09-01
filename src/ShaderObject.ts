@@ -1,6 +1,8 @@
 // Following mozilla tutorial: 
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Adding_2D_content_to_a_WebGL_context
 
+import { ReadonlyVec3 } from "gl-matrix";
+
 
 export class ShaderObject{
     vertices: number[];
@@ -8,11 +10,14 @@ export class ShaderObject{
     positionBuffer:WebGLBuffer;
     colorBuffer:WebGLBuffer;
     vertexNum: number;
+    position: any;
 
-    constructor(vertexNum:number, vertices: number[], color: number[]){
+    constructor(vertexNum:number, vertices: number[], color: number[],
+                position: any = [0.0, 0.0, -6.0]){
         this.vertices = vertices;
         this.color = color;
         this.vertexNum = vertexNum;
+        this.position = position;
     }
 
     initBuffers(gl: WebGLRenderingContext){

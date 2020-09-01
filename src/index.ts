@@ -60,27 +60,17 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
 
   // note: glmatrix.js always has the first argument
   // as the destination to receive the result.
-  mat4.perspective(projectionMatrix,
-                   fieldOfView,
-                   aspect,
-                   zNear,
-                   zFar);
-
-  // Set the drawing position to the "identity" point, which is
-  // the center of the scene.
-  const modelViewMatrix = mat4.create();
-
-  // Now move the drawing position a bit to where we want to
-  // start drawing the square.
-
-  mat4.translate(modelViewMatrix,     // destination matrix
-                 modelViewMatrix,     // matrix to translate
-                 [-0.0, 0.0, -6.0]);  // amount to translate
+  mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
 
   shaderObjects.forEach((obj: ShaderObject) => {
     obj.initBuffers(gl);
     setUpBuffer(2, obj.positionBuffer, programInfo.attribLocations.vertexPosition);
     setUpBuffer(4, obj.colorBuffer, programInfo.attribLocations.vertexColor);
+    const modelViewMatrix = mat4.create();
+  
+    mat4.translate(modelViewMatrix,     // destination matrix
+                  modelViewMatrix,     // matrix to translate
+                  obj.position);  // amount to translate
 
     gl.useProgram(programInfo.program);
 
@@ -144,7 +134,9 @@ function addObjectsToDraw(shaderObjects: ShaderObject[]){
     1.0,  1.0,  1.0,  1.0,    // white
     1.0,  0.0,  0.0,  1.0,    // red
     0.0,  1.0,  0.0,  1.0,    // green
-  ]);
+  ],
+    [0.0, 0.0, -6.0] // position
+  );
 
   shaderObjects.push(triangleA);
 }
