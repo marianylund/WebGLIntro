@@ -7,10 +7,12 @@ export class ShaderObject{
     color: number[];
     positionBuffer:WebGLBuffer;
     colorBuffer:WebGLBuffer;
+    vertexNum: number;
 
-    constructor(vertices: number[], color: number[]){
+    constructor(vertexNum:number, vertices: number[], color: number[]){
         this.vertices = vertices;
         this.color = color;
+        this.vertexNum = vertexNum;
     }
 
     initBuffers(gl: WebGLRenderingContext){

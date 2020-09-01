@@ -27,20 +27,8 @@ function main() {
     },
   };
 
-  const square = new ShaderObject([
-    -1.0,  1.0,
-     1.0,  1.0,
-    -1.0, -1.0,
-     1.0, -1.0,
-  ],[
-    1.0,  1.0,  1.0,  1.0,    // white
-    1.0,  0.0,  0.0,  1.0,    // red
-    0.0,  1.0,  0.0,  1.0,    // green
-    0.0,  0.0,  1.0,  1.0,    // blue
-  ]);
-
   const shaderObjects: ShaderObject[] = [];
-  shaderObjects.push(square);
+  addObjectsToDraw(shaderObjects);
 
   // Draw the scene
   drawScene(gl, programInfo, shaderObjects);
@@ -93,24 +81,25 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
     obj.initBuffers(gl);
     setUpBuffer(2, obj.positionBuffer, programInfo.attribLocations.vertexPosition);
     setUpBuffer(4, obj.colorBuffer, programInfo.attribLocations.vertexColor);
+
+    gl.useProgram(programInfo.program);
+
+    // Set the shader uniforms
+    gl.uniformMatrix4fv(
+        programInfo.uniformLocations.projectionMatrix,
+        false,
+        projectionMatrix);
+    gl.uniformMatrix4fv(
+        programInfo.uniformLocations.modelViewMatrix,
+        false,
+        modelViewMatrix);
+    {
+      const offset = 0;
+      gl.drawArrays(gl.TRIANGLE_STRIP, offset, obj.vertexNum);
+    }
   });
 
-  gl.useProgram(programInfo.program);
 
-  // Set the shader uniforms
-  gl.uniformMatrix4fv(
-      programInfo.uniformLocations.projectionMatrix,
-      false,
-      projectionMatrix);
-  gl.uniformMatrix4fv(
-      programInfo.uniformLocations.modelViewMatrix,
-      false,
-      modelViewMatrix);
-  {
-    const offset = 0;
-    const vertexCount = 4;
-    gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
-  }
 
   function setUpBuffer(numOfComponents: number, buffer:WebGLBuffer, attribLocation: number){
     const numComponents = numOfComponents;
@@ -130,6 +119,34 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
       attribLocation);
   }
 
+}
+
+function addObjectsToDraw(shaderObjects: ShaderObject[]){
+  const square = new ShaderObject(4, [
+    -1.0,  1.0,
+     1.0,  1.0,
+    -1.0, -1.0,
+     1.0, -1.0,
+  ],[
+    1.0,  1.0,  1.0,  1.0,    // white
+    1.0,  0.0,  0.0,  1.0,    // red
+    0.0,  1.0,  0.0,  1.0,    // green
+    0.0,  0.0,  1.0,  1.0,    // blue
+  ]);
+
+  //shaderObjects.push(square);
+
+  const triangleA = new ShaderObject(3, [
+      0.0,  1.0,
+     -1.0,  -1.0,
+      1.0, -1.0,
+  ],[
+    1.0,  1.0,  1.0,  1.0,    // white
+    1.0,  0.0,  0.0,  1.0,    // red
+    0.0,  1.0,  0.0,  1.0,    // green
+  ]);
+
+  shaderObjects.push(triangleA);
 }
 
 window.onload = main;
