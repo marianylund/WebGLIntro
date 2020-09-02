@@ -5,17 +5,20 @@ import {GUI} from 'dat.gui';
 
 
 export class ShaderObject{
-    vertices: number[];
+    positions: number[];
+    indices: number[];
     color: number[];
     positionBuffer:WebGLBuffer;
+    indexBuffer:WebGLBuffer;
     colorBuffer:WebGLBuffer;
     vertexNum: number;
     position: any;
     objPrimitive: number;
 
-    constructor(vertexNum:number, vertices: number[], color: number[],
+    constructor(vertexNum:number, positions: number[], indices: number[], color: number[],
                 position: any = [0.0, 0.0, -6.0], objPrimitive: number = 5){
-        this.vertices = vertices;
+        this.positions = positions;
+        this.indices = indices;
         this.color = color;
         this.vertexNum = vertexNum;
         this.position = position;
@@ -23,18 +26,18 @@ export class ShaderObject{
     }
 
     initBuffers(gl: WebGLRenderingContext){
-        const positionBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        this.positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.positions), gl.STATIC_DRAW);
 
-        gl.bufferData(gl.ARRAY_BUFFER,
-                        new Float32Array(this.vertices),
-                        gl.STATIC_DRAW);
+        this.indexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
+            new Uint16Array(this.indices), gl.STATIC_DRAW);
 
-        const colorBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+        this.colorBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.color), gl.STATIC_DRAW);
 
-        this.positionBuffer = positionBuffer;
-        this.colorBuffer = colorBuffer;
     }
 }

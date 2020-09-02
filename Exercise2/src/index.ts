@@ -72,6 +72,7 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
   // note: glmatrix.js always has the first argument
   // as the destination to receive the result.
   mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
+  const modelViewMatrix = mat4.create();
 
   const primitives = [gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, gl.TRIANGLES, gl.TRIANGLE_STRIP, gl.TRIANGLE_FAN];
 
@@ -80,9 +81,10 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
       return;
     }
     obj.initBuffers(gl);
-    setUpBuffer(2, obj.positionBuffer, programInfo.attribLocations.vertexPosition);
+    setUpBuffer(3, obj.positionBuffer, programInfo.attribLocations.vertexPosition);
     setUpBuffer(4, obj.colorBuffer, programInfo.attribLocations.vertexColor);
-    const modelViewMatrix = mat4.create();
+    // Tell WebGL which indices to use to index the vertices
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.indexBuffer);
   
     mat4.translate(modelViewMatrix,     // destination matrix
                   modelViewMatrix,     // matrix to translate
@@ -100,7 +102,9 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
         false,
         modelViewMatrix);
 
-    gl.drawArrays(obj.objPrimitive, 0, obj.vertexNum); // 0 is offset
+    const type = gl.UNSIGNED_SHORT;
+    const offset = 0;
+    gl.drawElements(gl.TRIANGLES, obj.vertexNum, type, offset);
   });
 
 
@@ -140,48 +144,77 @@ function initGUI(datGui:GUI){
 }
 
 function addObjectsToDraw(shaderObjects: ShaderObject[]){
-  const p0 = [0.0, 2.0];
-  const p1 = [1.5, 1.5];
-  const p2 = [2.0, 0.0];
-  const p3 = [1.5, -1.5];
-  const p4 = [0.0, -2.0];
-  const p5 = [-1.5, -1.5];
-  const p6 = [-2.0, 0.0];
-  const p7 = [-1.5, 1.5];
+  const positions = [
+    // Front face
+    -1.0, -1.0,  1.0,
+     1.0, -1.0,  1.0,
+     1.0,  1.0,  1.0,
+    -1.0,  1.0,  1.0,
+    
+    // Back face
+    -1.0, -1.0, -1.0,
+    -1.0,  1.0, -1.0,
+     1.0,  1.0, -1.0,
+     1.0, -1.0, -1.0,
+    
+    // Top face
+    -1.0,  1.0, -1.0,
+    -1.0,  1.0,  1.0,
+     1.0,  1.0,  1.0,
+     1.0,  1.0, -1.0,
+    
+    // Bottom face
+    -1.0, -1.0, -1.0,
+     1.0, -1.0, -1.0,
+     1.0, -1.0,  1.0,
+    -1.0, -1.0,  1.0,
+    
+    // Right face
+     1.0, -1.0, -1.0,
+     1.0,  1.0, -1.0,
+     1.0,  1.0,  1.0,
+     1.0, -1.0,  1.0,
+    
+    // Left face
+    -1.0, -1.0, -1.0,
+    -1.0, -1.0,  1.0,
+    -1.0,  1.0,  1.0,
+    -1.0,  1.0, -1.0,
+  ];
+
+  const indices = [
+    0,  1,  2,      0,  2,  3,    // front
+    4,  5,  6,      4,  6,  7,    // back
+    8,  9,  10,     8,  10, 11,   // top
+    12, 13, 14,     12, 14, 15,   // bottom
+    16, 17, 18,     16, 18, 19,   // right
+    20, 21, 22,     20, 22, 23,   // left
+  ];
+
+  const faceColors = [
+    [1.0,  1.0,  1.0,  1.0],    // Front face: white
+    [1.0,  0.0,  0.0,  1.0],    // Back face: red
+    [0.0,  1.0,  0.0,  1.0],    // Top face: green
+    [0.0,  0.0,  1.0,  1.0],    // Bottom face: blue
+    [1.0,  1.0,  0.0,  1.0],    // Right face: yellow
+    [1.0,  0.0,  1.0,  1.0],    // Left face: purple
+  ];
+
+  let colors: number[] = [];
+
+  for (var j = 0; j < faceColors.length; ++j) {
+    const c = faceColors[j];
+
+    // Repeat each color four times for the four vertices of the face
+    colors = colors.concat(c, c, c, c);
+  }
 
   const white = [ 1.0,  1.0,  1.0,  1.0];
   const red = [ 1.0,  0.0,  0.0,  1.0];
   const green = [ 0.0,  1.0,  0.0,  1.0];
   const blue = [ 0.0,  0.0,  1.0,  1.0];
 
-  const point0 = new ShaderObject(2, p0.concat(p1), white.concat(red), [0.0, 0.0, 0.0], 0);
-  shaderObjects.push(point0);
-
-  const line1 = new ShaderObject(2, p2.concat(p3), white.concat(red), [2.0, -1.0, -7.0], 1);
-  shaderObjects.push(line1);
-
-  const lineStrip2 = new ShaderObject(3, p4.concat(p5).concat(p6), white.concat(red).concat(green), [0.0, 2.5, -7.0], 2);
-  shaderObjects.push(lineStrip2);
-  
-  const lineLoop3 = new ShaderObject(4, p4.concat(p5).concat(p6).concat(p4), white.concat(red).concat(green).concat(blue), [2.0, 2.5, -7.0], 3);
-  shaderObjects.push(lineLoop3);
-
-  const triangle4 = new ShaderObject(3, p1.concat(p2).concat(p3), red.concat(green).concat(blue), [1.0, 0.5, -7.0], 4);
-  shaderObjects.push(triangle4);
-
-  const triangle5 = new ShaderObject(3, p1.concat(p2).concat(p3), red.concat(green).concat(blue), [2.0, 0.5, -7.0], 5);
-  shaderObjects.push(triangle5);
-
-  const triangle6 = new ShaderObject(3, p1.concat(p2).concat(p3), red.concat(green).concat(blue), [3.0, 0.5, -7.0], 6);
-  shaderObjects.push(triangle6);
-
-  const square4 = new ShaderObject(4, p1.concat(p3).concat(p5).concat(p7), red.concat(green).concat(blue).concat(white), [1.0, -1.0, -9.0], 4);
-  shaderObjects.push(square4);
-
-  const square5 = new ShaderObject(4, p1.concat(p3).concat(p5).concat(p7), red.concat(green).concat(blue).concat(white), [-2.3, -1.0, -9.0], 5);
-  shaderObjects.push(square5);
-
-  const square6 = new ShaderObject(4, p1.concat(p3).concat(p5).concat(p7), red.concat(green).concat(blue).concat(white), [-5.6, -1.0, -9.0], 6);
+  const square6 = new ShaderObject(36, positions, indices, colors, [0, -1.0, -9.0], 6);
   shaderObjects.push(square6);
 
 }
