@@ -4,17 +4,21 @@ import { ShaderObject } from './ShaderObject';
 import {mat4, vec3} from 'gl-matrix';
 
 const PrimitivesUISettings = {POINTS: false, LINES: false, LINE_STRIP: false, LINE_LOOP: true, TRIANGLES: false, TRIANGLE_STRIP: false, TRIANGLE_FAN: false};
-const OtherUISettings = {rotationFirst: false, scaleFirst: false};
+const OtherUISettings = {TRS: true, TSR: false, STR: false, SRT: false, RTS: false, RST: false};
 
 let gl:WebGLRenderingContext;
 let gui: GUI;
 let programInfo:any;
 let shaderObjects: ShaderObject[] = [];
 let cameraPosition: vec3 = [0.0, 0.0, 0.0];
+const mousePosition: vec3 = [0.0, 0.0, 0.0];
 const cameraSpeed = 0.1;
 
 function main() {
   const canvas = document.createElement('canvas');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+
   document.querySelector('body').appendChild(canvas);
   gl = canvas.getContext('webgl');
 
@@ -43,6 +47,12 @@ function main() {
 
   addObjectsToDraw(shaderObjects);
 
+  onmousemove = function(e){
+    console.log("mouse location:", e.clientX, e.clientY);
+    mousePosition[0] = e.clientX/canvas.width * 10.0;
+    mousePosition[1] = e.clientY/window.innerHeight * 10.0;
+    
+  }
   
 
   var then = 0;
@@ -88,38 +98,55 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
   // as the destination to receive the result.
   mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
   mat4.translate(projectionMatrix, projectionMatrix, cameraPosition);
-  const modelViewMatrix = mat4.create();
-
+  
   const primitives = [gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, gl.TRIANGLES, gl.TRIANGLE_STRIP, gl.TRIANGLE_FAN];
-
+  
   shaderObjects.forEach((obj: ShaderObject) => {
     obj.initBuffers(gl);
     setUpBuffer(3, obj.positionBuffer, programInfo.attribLocations.vertexPosition);
     setUpBuffer(4, obj.colorBuffer, programInfo.attribLocations.vertexColor);
     // Tell WebGL which indices to use to index the vertices
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.indexBuffer);
-  
-    if(OtherUISettings.rotationFirst){
-      if(OtherUISettings.scaleFirst){
-        rotateObj(obj);
-        mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
-        mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
-      }else{
-        rotateObj(obj);
-        mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
-        mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
-      }
-    } else if(OtherUISettings.scaleFirst){
-      mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
-      mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
-      rotateObj(obj);
-    }else{
-      // correct way
-      mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
-      mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
-      rotateObj(obj);
-    }
     
+    const modelViewMatrix = mat4.create();
+
+    switch (getFirstUISettingIndex(OtherUISettings)) {
+      case 0:
+        mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
+        rotateObj(obj);
+        mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
+        break;
+      case 1:
+        mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
+        mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
+        rotateObj(obj);
+        break;
+      case 2:
+        mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
+        mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
+        rotateObj(obj);
+      break;
+      case 3:
+        mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
+        rotateObj(obj);
+        mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
+        break;
+      case 4:
+        rotateObj(obj);
+        mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
+        mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
+        break;
+      case 5:
+        rotateObj(obj);
+        mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
+        mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
+        break;
+    
+      default:
+        mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
+        rotateObj(obj);
+        mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
+    }
     
     gl.useProgram(programInfo.program);
 
@@ -135,23 +162,29 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
 
     const type = gl.UNSIGNED_SHORT;
     const offset = 0;
-    gl.drawElements(primitives[getFirstUISettingIndex()], obj.vertexNum, type, offset);
+    let indexPrim = getFirstUISettingIndex(PrimitivesUISettings);
+    if( indexPrim == -1){
+      indexPrim = 4;
+    }
+
+    gl.drawElements(primitives[indexPrim], obj.vertexNum, type, offset);
+
+    function rotateObj(obj: ShaderObject) {
+      const rot = obj.getRotation();
+      mat4.rotateX(modelViewMatrix, modelViewMatrix, rot[0]);
+      mat4.rotateY(modelViewMatrix, modelViewMatrix, rot[1]);
+      mat4.rotateZ(modelViewMatrix, modelViewMatrix, rot[2]);
+    }
   });
 
-  function rotateObj(obj: ShaderObject) {
-    const rot = obj.getRotation();
-    mat4.rotateX(modelViewMatrix, modelViewMatrix, rot[0]);
-    mat4.rotateY(modelViewMatrix, modelViewMatrix, rot[1]);
-    mat4.rotateZ(modelViewMatrix, modelViewMatrix, rot[2]);
-  }
 
-  function getFirstUISettingIndex(){
-    for (let i = 0; i < Object.keys(PrimitivesUISettings).length; i++) {
-      if(Object.values(PrimitivesUISettings)[i]){
+  function getFirstUISettingIndex(UISettings: any){
+    for (let i = 0; i < Object.keys(UISettings).length; i++) {
+      if(Object.values(UISettings)[i]){
         return i;
       }
     }
-    return Object.keys(PrimitivesUISettings).length - 1;
+    return -1;
   }
 
 
@@ -185,9 +218,12 @@ function initGUI(datGui:GUI){
     const UIKey = Object.keys(PrimitivesUISettings)[i];
     primitivesFolder.add(PrimitivesUISettings, UIKey).name(UIKey)
   }
-  
-  datGui.add(OtherUISettings, "rotationFirst").name("RotationFirst");
-  datGui.add(OtherUISettings, "scaleFirst").name("ScaleFirst");
+
+  const transformationsFolder = datGui.addFolder("TransformationsOrder");
+  for (let i = 0; i < Object.keys(OtherUISettings).length; i++) {
+    const UIKey = Object.keys(OtherUISettings)[i];
+    transformationsFolder.add(OtherUISettings, UIKey).name(UIKey)
+  }
 }
 
 function addObjectsToDraw(shaderObjects: ShaderObject[]){
