@@ -1,18 +1,23 @@
 import {GUI} from 'dat.gui'; 
 import { ShadersLoader } from './ShadersLoader';
 import { ShaderObject } from './ShaderObject';
-import {mat4} from 'gl-matrix';
+import {mat4, vec3} from 'gl-matrix';
 
-const UISettings = {POINTS: true, LINES: true, LINE_STRIP: true, LINE_LOOP: true, TRIANGLES: true, TRIANGLE_STRIP: true, TRIANGLE_FAN: true};
+
+
+const UISettings = {POINTS: false, LINES: false, LINE_STRIP: false, LINE_LOOP: true, TRIANGLES: false, TRIANGLE_STRIP: false, TRIANGLE_FAN: false};
 let gl:WebGLRenderingContext;
 let programInfo:any;
 let shaderObjects: ShaderObject[] = [];
+let cameraPosition: vec3 = [0.0, 0.0, 0.0];
+const cameraSpeed = 0.1;
 
 function main() {
   const canvas = document.createElement('canvas');
   document.querySelector('body').appendChild(canvas);
   gl = canvas.getContext('webgl');
 
+  document.addEventListener('keydown', onKeyDown, false);
   // Only continue if WebGL is available and working
   if (gl === null) {
     alert("Unable to initialize WebGL. Your browser or machine may not support it.");
@@ -37,16 +42,25 @@ function main() {
 
   addObjectsToDraw(shaderObjects);
 
-  // Draw the scene
-  drawScene(gl, programInfo, shaderObjects);
+  
+
+  var then = 0;
+
+  // Draw the scene repeatedly
+  function render(now: number) {
+    now *= 0.001;  // convert to seconds
+    const deltaTime = now - then;
+    then = now;
+
+    // Draw the scene
+    drawScene(gl, programInfo, shaderObjects, deltaTime);
+
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
 }
 
-function redrawScene(){
-  drawScene(gl, programInfo, shaderObjects);
-}
-
-
-function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: any) {
+function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: any, deltaTime:number) {
   gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
   gl.clearDepth(1.0);                 // Clear everything
   gl.enable(gl.DEPTH_TEST);           // Enable depth testing
@@ -68,18 +82,16 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
   const zNear = 0.1;
   const zFar = 100.0;
   const projectionMatrix = mat4.create();
-
+  
   // note: glmatrix.js always has the first argument
   // as the destination to receive the result.
   mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
+  mat4.translate(projectionMatrix, projectionMatrix, cameraPosition);
   const modelViewMatrix = mat4.create();
 
   const primitives = [gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, gl.TRIANGLES, gl.TRIANGLE_STRIP, gl.TRIANGLE_FAN];
 
   shaderObjects.forEach((obj: ShaderObject) => {
-    if(!Object.values(UISettings)[obj.objPrimitive]){
-      return;
-    }
     obj.initBuffers(gl);
     setUpBuffer(3, obj.positionBuffer, programInfo.attribLocations.vertexPosition);
     setUpBuffer(4, obj.colorBuffer, programInfo.attribLocations.vertexColor);
@@ -104,9 +116,17 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
 
     const type = gl.UNSIGNED_SHORT;
     const offset = 0;
-    gl.drawElements(gl.TRIANGLES, obj.vertexNum, type, offset);
+    gl.drawElements(primitives[getFirstUISettingIndex()], obj.vertexNum, type, offset);
   });
 
+  function getFirstUISettingIndex(){
+    for (let i = 0; i < Object.keys(UISettings).length; i++) {
+      if(Object.values(UISettings)[i]){
+        return i;
+      }
+    }
+    return Object.keys(UISettings).length - 1;
+  }
 
 
   function setUpBuffer(numOfComponents: number, buffer:WebGLBuffer, attribLocation: number){
@@ -138,8 +158,6 @@ function initGUI(datGui:GUI){
     const UIKey = Object.keys(UISettings)[i];
     datGui.add(UISettings, UIKey)
                 .name(UIKey)
-                .listen()
-                .onChange(v => redrawScene());
   }
 }
 
@@ -217,6 +235,24 @@ function addObjectsToDraw(shaderObjects: ShaderObject[]){
   const square6 = new ShaderObject(36, positions, indices, colors, [0, -1.0, -9.0], 6);
   shaderObjects.push(square6);
 
+}
+
+function onKeyDown(event: KeyboardEvent)
+{
+  switch (event.key) {
+    case "ArrowDown":
+      cameraPosition[1] += cameraSpeed;
+      break;
+    case "ArrowUp":
+      cameraPosition[1] -= cameraSpeed;
+      break;
+    case "ArrowLeft":
+      cameraPosition[0] -= cameraSpeed;
+      break;
+    case "ArrowRight":
+      cameraPosition[0] += cameraSpeed;
+      break;
+}
 }
 
 window.onload = main;
