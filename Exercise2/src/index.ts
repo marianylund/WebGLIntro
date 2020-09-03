@@ -3,10 +3,11 @@ import { ShadersLoader } from './ShadersLoader';
 import { ShaderObject } from './ShaderObject';
 import {mat4, vec3} from 'gl-matrix';
 
+const PrimitivesUISettings = {POINTS: false, LINES: false, LINE_STRIP: false, LINE_LOOP: true, TRIANGLES: false, TRIANGLE_STRIP: false, TRIANGLE_FAN: false};
+const OtherUISettings = {rotationFirst: false, scaleFirst: false};
 
-
-const UISettings = {POINTS: false, LINES: false, LINE_STRIP: false, LINE_LOOP: true, TRIANGLES: false, TRIANGLE_STRIP: false, TRIANGLE_FAN: false};
 let gl:WebGLRenderingContext;
+let gui: GUI;
 let programInfo:any;
 let shaderObjects: ShaderObject[] = [];
 let cameraPosition: vec3 = [0.0, 0.0, 0.0];
@@ -24,7 +25,7 @@ function main() {
     return;
   }
 
-  const gui = new GUI();
+  gui = new GUI();
   initGUI(gui);
 
   const shaders = new ShadersLoader(gl);
@@ -98,10 +99,28 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
     // Tell WebGL which indices to use to index the vertices
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.indexBuffer);
   
-    mat4.translate(modelViewMatrix,     // destination matrix
-                  modelViewMatrix,     // matrix to translate
-                  obj.position);  // amount to translate
-
+    if(OtherUISettings.rotationFirst){
+      if(OtherUISettings.scaleFirst){
+        rotateObj(obj);
+        mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
+        mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
+      }else{
+        rotateObj(obj);
+        mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
+        mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
+      }
+    } else if(OtherUISettings.scaleFirst){
+      mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
+      mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
+      rotateObj(obj);
+    }else{
+      // correct way
+      mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
+      mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
+      rotateObj(obj);
+    }
+    
+    
     gl.useProgram(programInfo.program);
 
     // Set the shader uniforms
@@ -119,13 +138,20 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
     gl.drawElements(primitives[getFirstUISettingIndex()], obj.vertexNum, type, offset);
   });
 
+  function rotateObj(obj: ShaderObject) {
+    const rot = obj.getRotation();
+    mat4.rotateX(modelViewMatrix, modelViewMatrix, rot[0]);
+    mat4.rotateY(modelViewMatrix, modelViewMatrix, rot[1]);
+    mat4.rotateZ(modelViewMatrix, modelViewMatrix, rot[2]);
+  }
+
   function getFirstUISettingIndex(){
-    for (let i = 0; i < Object.keys(UISettings).length; i++) {
-      if(Object.values(UISettings)[i]){
+    for (let i = 0; i < Object.keys(PrimitivesUISettings).length; i++) {
+      if(Object.values(PrimitivesUISettings)[i]){
         return i;
       }
     }
-    return Object.keys(UISettings).length - 1;
+    return Object.keys(PrimitivesUISettings).length - 1;
   }
 
 
@@ -154,11 +180,14 @@ function initGUI(datGui:GUI){
       return;
   }
 
-  for (let i = 0; i < Object.keys(UISettings).length; i++) {
-    const UIKey = Object.keys(UISettings)[i];
-    datGui.add(UISettings, UIKey)
-                .name(UIKey)
+  const primitivesFolder = datGui.addFolder("WebGL Primitives");
+  for (let i = 0; i < Object.keys(PrimitivesUISettings).length; i++) {
+    const UIKey = Object.keys(PrimitivesUISettings)[i];
+    primitivesFolder.add(PrimitivesUISettings, UIKey).name(UIKey)
   }
+  
+  datGui.add(OtherUISettings, "rotationFirst").name("RotationFirst");
+  datGui.add(OtherUISettings, "scaleFirst").name("ScaleFirst");
 }
 
 function addObjectsToDraw(shaderObjects: ShaderObject[]){
@@ -232,7 +261,7 @@ function addObjectsToDraw(shaderObjects: ShaderObject[]){
   const green = [ 0.0,  1.0,  0.0,  1.0];
   const blue = [ 0.0,  0.0,  1.0,  1.0];
 
-  const square6 = new ShaderObject(36, positions, indices, colors, [0, -1.0, -9.0], 6);
+  const square6 = new ShaderObject(36, positions, indices, colors, [0, -1.0, -9.0], 6, gui);
   shaderObjects.push(square6);
 
 }
