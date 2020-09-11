@@ -60,7 +60,7 @@ const positions = [
 
   export class RubiksCube{
       cubeState: Cube[];
-      RotationGroups = {'F': {x: 0.0, y: 0.0, z: 0.0}, 'R':{x: 0.0, y: 0.0, z: 0.0}, 'U':{x: 0.0, y: 0.0, z: 0.0}, 'L':{x: 0.0, y: 0.0, z: 0.0}, 'B':{x: 0.0, y: 0.0, z: 0.0}, 'D':{x: 0.0, y: 0.0, z: 0.0}};
+      RotationGroups = {'F': false, 'R':false, 'U':false, 'L':false, 'B':false, 'D':false};
       
     constructor(shaderObjects: ShaderObject[], dim: number = 2, datGui: GUI = null){
 
@@ -83,19 +83,21 @@ const positions = [
             for (let i = 0; i < Object.keys(this.RotationGroups).length; i++) {
                 const key = Object.keys(this.RotationGroups)[i];
                 const rot = Object.values(this.RotationGroups)[i];
-                const groupFolder = datGui.addFolder(key);
-                
-                groupFolder.add(rot, 'x', -4, 4, 0.01).onChange(v => this.rotateGroup(key, v));
-                groupFolder.add(rot, 'y', -4, 4, 0.01);
-                groupFolder.add(rot, 'z', -4, 4, 0.01);
+
+                datGui.add(this.RotationGroups, key).name(key).onChange(v => {
+                    if(v){
+                        this.rotateGroup(key);
+                    }
+                });
+
             }
         }
     }
 
-    rotateGroup(group:string, x:number = null, y:number = null, z:number = null){
+    rotateGroup(group:string){
         const groupOfCubes = this.getAllCubesOfGroup(group);
         groupOfCubes.forEach(cube => {
-            cube.rotation.x += x;
+            cube.rotateGroup(group);
         });
     }
 

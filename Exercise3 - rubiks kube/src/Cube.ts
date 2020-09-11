@@ -1,4 +1,6 @@
 import { ShaderObject } from "./ShaderObject";
+import {Matrix4, Vector3, Quaternion} from "three";
+
 
 const positions = [
     // Front face
@@ -72,8 +74,52 @@ const positions = [
 
   export class Cube extends ShaderObject{
     state: number[];
+    modelViewMatrix: Matrix4;
     constructor(position: any = [0.0, 0.0, -6.0], objPrimitive: number = 5){
-            super(36, positions, indices, colors, position, objPrimitive, null);
-            this.state = [];
+        super(36, positions, indices, colors, position, objPrimitive, null);
+        this.state = [];
+        const m = new Matrix4();
+        const translationMatrix = new Matrix4().makeTranslation(position[0], position[1], position[2]);
+        m.multiply(translationMatrix);
+    }
+    
+    getModelViewMatrix(){
+        return this.modelViewMatrix;
+    }
+
+    
+    rotateGroup(group:string){
+        console.log("Group", group);
+        // let pos = vec3.create();
+        // mat4.getTranslation(pos, this.modelViewMatrix);
+        // console.log("Pos ", pos);
+        // //vec3.subtract(pos, pos, vec3.fromValues(1, 1, 1));
+        
+        // let negPos = vec3.create();
+        // vec3.negate(negPos, pos);
+        
+
+        switch (group) {
+            case 'F':
+                // mat4.translate(this.modelViewMatrix, this.modelViewMatrix, negPos);
+                // mat4.rotateZ(this.modelViewMatrix, this.modelViewMatrix, Math.PI/2.0);
+                // mat4.translate(this.modelViewMatrix, this.modelViewMatrix, pos);
+                // let rot = quat.create();
+                // mat4.getRotation(rot, this.modelViewMatrix);
+                break;
+            case 'R':
+                break;
+            case 'U':
+                break;
+            case 'L':
+                break;
+            case 'B':
+                break;
+            case 'D':
+                break;
+            default:
+                console.log("Something wrong!. Group: ", group)
+                break;
         }
-  }
+    }    
+}

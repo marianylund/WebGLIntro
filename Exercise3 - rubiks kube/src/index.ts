@@ -1,8 +1,7 @@
 import {GUI} from 'dat.gui'; 
 import { ShadersLoader } from './ShadersLoader';
 import { ShaderObject } from './ShaderObject';
-import {mat4, vec3} from 'gl-matrix';
-import { Cube } from './Cube';
+import {Matrix4, Vector3} from "three";
 import { RubiksCube } from './RubiksCube';
 
 const PrimitivesUISettings = {POINTS: false, LINES: false, LINE_STRIP: false, LINE_LOOP: true, TRIANGLES: false, TRIANGLE_STRIP: false, TRIANGLE_FAN: false};
@@ -12,8 +11,8 @@ let gl:WebGLRenderingContext;
 let gui: GUI;
 let programInfo:any;
 let shaderObjects: ShaderObject[] = [];
-let cameraPosition: vec3 = [0.0, 0.0, 0.0];
-const mousePosition: vec3 = [0.0, 0.0, 0.0];
+let cameraPosition: Vector3 = new Vector3(0.0, 0.0, 0.0);
+const mousePosition: Vector3 = new Vector3(0.0, 0.0, 0.0);
 const cameraSpeed = 0.1;
 
 function main() {
@@ -49,12 +48,12 @@ function main() {
 
   addObjectsToDraw(shaderObjects);
 
-  onmousemove = function(e){
-    //console.log("mouse location:", e.clientX, e.clientY);
-    mousePosition[0] = e.clientX/canvas.width * 10.0;
-    mousePosition[1] = e.clientY/window.innerHeight * 10.0;
+  // onmousemove = function(e){
+  //   //console.log("mouse location:", e.clientX, e.clientY);
+  //   mousePosition[0] = e.clientX/canvas.width * 10.0;
+  //   mousePosition[1] = e.clientY/window.innerHeight * 10.0;
     
-  }
+  // }
   
 
   var then = 0;
@@ -94,12 +93,20 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
   const aspect = gl.canvas.width / gl.canvas.height;
   const zNear = 0.1;
   const zFar = 100.0;
-  const projectionMatrix = mat4.create();
+  
+  let zoom = 0.02;
+  let top = zNear * Math.tan( Math.PI/180 * 0.5 * fieldOfView ) / zoom; // divide by zoom
+  let height = 2 * top;
+  let width = aspect * height;
+  let left = - 0.5 * width;
+
+  const projectionMatrix = new Matrix4();
+  const cameraTranslationMatrix = new Matrix4().makeTranslation(cameraPosition.x, cameraPosition.y, cameraPosition.z);
   
   // note: glmatrix.js always has the first argument
   // as the destination to receive the result.
-  mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
-  mat4.translate(projectionMatrix, projectionMatrix, cameraPosition);
+  projectionMatrix.makePerspective(left, left + width, top, top - height, zNear, zFar);
+  projectionMatrix.multiply(cameraTranslationMatrix);
   
   const primitives = [gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, gl.TRIANGLES, gl.TRIANGLE_STRIP, gl.TRIANGLE_FAN];
   
@@ -116,11 +123,11 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
     gl.uniformMatrix4fv(
         programInfo.uniformLocations.projectionMatrix,
         false,
-        projectionMatrix);
+        projectionMatrix.toArray());
     gl.uniformMatrix4fv(
         programInfo.uniformLocations.modelViewMatrix,
         false,
-        obj.getModelViewMatrix());
+        obj.getModelViewMatrix().toArray());
 
     const type = gl.UNSIGNED_SHORT;
     const offset = 0;
@@ -188,16 +195,16 @@ function onKeyDown(event: KeyboardEvent)
 {
   switch (event.key) {
     case "ArrowDown":
-      cameraPosition[1] += cameraSpeed;
+      cameraPosition.y += cameraSpeed;
       break;
     case "ArrowUp":
-      cameraPosition[1] -= cameraSpeed;
+      cameraPosition.y -= cameraSpeed;
       break;
     case "ArrowLeft":
-      cameraPosition[0] -= cameraSpeed;
+      cameraPosition.x -= cameraSpeed;
       break;
     case "ArrowRight":
-      cameraPosition[0] += cameraSpeed;
+      cameraPosition.x += cameraSpeed;
       break;
 }
 }

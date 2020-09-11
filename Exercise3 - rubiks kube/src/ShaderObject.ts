@@ -2,7 +2,7 @@
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Adding_2D_content_to_a_WebGL_context
 
 import {GUI} from 'dat.gui'; 
-import { vec3, mat4, quat } from 'gl-matrix';
+import {Euler, Matrix4, Vector3} from "three";
 
 export class ShaderObject{
     positions: number[];
@@ -12,9 +12,11 @@ export class ShaderObject{
     indexBuffer:WebGLBuffer;
     colorBuffer:WebGLBuffer;
     vertexNum: number;
-    position: {x:number, y:number, z:number};
-    rotation: {x:number, y:number, z:number};
+    position: Vector3;
+    rotation: Euler;
     objPrimitive: number;
+    modelViewMatrix: Matrix4;
+
 
     constructor(vertexNum:number, positions: number[], indices: number[], color: number[],
                 position: any = [0.0, 0.0, -6.0], objPrimitive: number = 5, datGui: GUI = null){
@@ -22,9 +24,13 @@ export class ShaderObject{
         this.indices = indices;
         this.color = color;
         this.vertexNum = vertexNum;
-        this.position = {x: position[0], y: position[1], z: position[2]};
-        this.rotation = {x: 0, y: 0, z: 0};
+        this.position = new Vector3(position[0], position[1], position[2]);
+        this.rotation = new Euler(0, 0, 0);
         this.objPrimitive = objPrimitive;
+
+        this.modelViewMatrix = new Matrix4();
+        const translationMatrix = new Matrix4().makeTranslation(position[0], position[1], position[2]);
+        this.modelViewMatrix.multiply(translationMatrix);
 
         if(datGui != null){
             const posFolder = datGui.addFolder("CubePosition");
@@ -41,27 +47,16 @@ export class ShaderObject{
     }
 
     getPosition(){
-        return vec3.fromValues(this.position.x, this.position.y, this.position.z);
+        return this.position;
     }
 
     getRotation(){
-        return vec3.fromValues(this.rotation.x, this.rotation.y, this.rotation.z);
+        return this.rotation;
     }
 
     getModelViewMatrix(){
-        let modelViewMatrix = mat4.create();
-        mat4.translate(modelViewMatrix, modelViewMatrix, this.getPosition());
-        modelViewMatrix = this.rotateModelViewMatrix(this.getRotation(), modelViewMatrix);
-        return modelViewMatrix;
+        return this.modelViewMatrix;
     }
-
-    rotateModelViewMatrix(rot:vec3, modelViewMatrix:mat4) {
-        mat4.rotateX(modelViewMatrix, modelViewMatrix, rot[0]);
-        mat4.rotateY(modelViewMatrix, modelViewMatrix, rot[1]);
-        mat4.rotateZ(modelViewMatrix, modelViewMatrix, rot[2]);
-        // TODO: need to update rotation somehow as well
-        return modelViewMatrix;
-      }
 
     initBuffers(gl: WebGLRenderingContext){
         this.positionBuffer = gl.createBuffer();
