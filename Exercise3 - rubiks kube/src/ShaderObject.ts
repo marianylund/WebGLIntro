@@ -2,7 +2,7 @@
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Adding_2D_content_to_a_WebGL_context
 
 import {GUI} from 'dat.gui'; 
-import {Euler, Matrix4, Vector3} from "three";
+import {Euler, Matrix4, Quaternion, Vector3} from "three";
 
 export class ShaderObject{
     positions: number[];
@@ -13,7 +13,8 @@ export class ShaderObject{
     colorBuffer:WebGLBuffer;
     vertexNum: number;
     position: Vector3;
-    rotation: Euler;
+    rotationQ: Quaternion;
+    rotationE: Euler;
     objPrimitive: number;
     modelViewMatrix: Matrix4;
 
@@ -25,37 +26,57 @@ export class ShaderObject{
         this.color = color;
         this.vertexNum = vertexNum;
         this.position = new Vector3(position[0], position[1], position[2]);
-        this.rotation = new Euler(0, 0, 0);
+        this.rotationE = new Euler();
+        this.rotationQ = new Quaternion();
         this.objPrimitive = objPrimitive;
 
         this.modelViewMatrix = new Matrix4();
         const translationMatrix = new Matrix4().makeTranslation(position[0], position[1], position[2]);
         this.modelViewMatrix.multiply(translationMatrix);
-
-        if(datGui != null){
-            const posFolder = datGui.addFolder("CubePosition");
-            posFolder.add(this.position, 'x', -10, 10, 0.01);
-            posFolder.add(this.position, 'y', -10, 10, 0.01);
-            posFolder.add(this.position, 'z', -20, 0, 0.01);
-
-            const rotFolder = datGui.addFolder("CubeRotation");
-            rotFolder.add(this.rotation, 'x', -4, 4, 0.01);
-            rotFolder.add(this.rotation, 'y', -4, 4, 0.01);
-            rotFolder.add(this.rotation, 'z', -4, 4, 0.01);
-        }
-    
     }
 
     getPosition(){
-        return this.position;
+        return new Vector3().setFromMatrixPosition(this.modelViewMatrix);
     }
 
-    getRotation(){
-        return this.rotation;
+    getTranslationMatrix(){
+        return new Matrix4().makeTranslation(this.position.x, this.position.y, this.position.z);
+    }
+
+    getTranslationMatrixFromOrigin(){
+        return new Matrix4().makeTranslation(0 + this.position.x, 0 + this.position.y, 0);
+    }
+
+    getNegTranslationMatrix(){
+        return new Matrix4().makeTranslation(0 - this.position.x, 0 - this.position.y, 0);
+    }
+
+    getQRotation(){
+        return new Quaternion().setFromRotationMatrix(this.modelViewMatrix);
+    }
+
+    getERotation(){
+        return new Euler().setFromRotationMatrix(this.modelViewMatrix);
     }
 
     getModelViewMatrix(){
         return this.modelViewMatrix;
+    }
+
+    updateModelViewMatrix(){
+        this.modelViewMatrix = new Matrix4();
+        this.rotationQ.setFromEuler(this.rotationE);
+        const rotationMatrix = new Matrix4().makeRotationFromQuaternion(this.rotationQ);
+
+        this.modelViewMatrix.multiply(rotationMatrix);
+        this.modelViewMatrix.multiply(this.getTranslationMatrix());
+    }
+
+    setNewModelViewMatrix(newM:Matrix4){
+        this.rotationE = new Euler().setFromRotationMatrix(newM);
+        this.rotationQ = new Quaternion().setFromRotationMatrix(newM);
+        this.position = new Vector3().setFromMatrixPosition(newM);
+        this.modelViewMatrix = newM;
     }
 
     initBuffers(gl: WebGLRenderingContext){
@@ -72,5 +93,33 @@ export class ShaderObject{
         gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.color), gl.STATIC_DRAW);
 
+    }
+
+    getDirection(dir:Vector3){
+        return dir.applyQuaternion(new Quaternion().setFromRotationMatrix(this.modelViewMatrix));
+    }
+
+    getUp(){
+        return this.getDirection(new Vector3(0, 1, 0));
+    }
+
+    getRight(){
+        return this.getDirection(new Vector3(1, 0, 0));
+    }
+
+    getForward(){
+        return this.getDirection(new Vector3(0, 0, 1));
+    }
+
+    getDown(){
+        return this.getDirection(new Vector3(0, -1, 0));
+    }
+
+    getLeft(){
+        return this.getDirection(new Vector3(-1, 0, 0));
+    }
+
+    getBack(){
+        return this.getDirection(new Vector3(0, 0, 1));
     }
 }

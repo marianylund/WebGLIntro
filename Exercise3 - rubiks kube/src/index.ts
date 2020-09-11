@@ -14,6 +14,7 @@ let shaderObjects: ShaderObject[] = [];
 let cameraPosition: Vector3 = new Vector3(0.0, 0.0, 0.0);
 const mousePosition: Vector3 = new Vector3(0.0, 0.0, 0.0);
 const cameraSpeed = 0.1;
+let zoom = 0.02;
 
 function main() {
   const canvas = document.createElement('canvas');
@@ -54,7 +55,15 @@ function main() {
   //   mousePosition[1] = e.clientY/window.innerHeight * 10.0;
     
   // }
-  
+
+  canvas.addEventListener('wheel', function(event){
+    event.preventDefault();
+
+    zoom += event.deltaY * -0.001;
+
+    // Restrict scale
+    zoom = Math.min(Math.max(.005, zoom), 0.1);
+  })
 
   var then = 0;
 
@@ -94,7 +103,6 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
   const zNear = 0.1;
   const zFar = 100.0;
   
-  let zoom = 0.02;
   let top = zNear * Math.tan( Math.PI/180 * 0.5 * fieldOfView ) / zoom; // divide by zoom
   let height = 2 * top;
   let width = aspect * height;
