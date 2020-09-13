@@ -11,7 +11,7 @@ let gl:WebGLRenderingContext;
 let gui: GUI;
 let programInfo:any;
 let shaderObjects: ShaderObject[] = [];
-let cameraPosition: Vector3 = new Vector3(0.0, 0.0, 0.0);
+let cameraPosition: Vector3 = new Vector3(0.0, 0.0, -12.0);
 const mousePosition: Vector3 = new Vector3(0.0, 0.0, 0.0);
 const cameraSpeed = 0.1;
 let zoom = 0.02;

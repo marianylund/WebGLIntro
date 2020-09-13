@@ -68,7 +68,7 @@ const positions = [
         for (let i = 0; i < dim; i++) {
             for (let j = 0; j < dim; j++) {
                 for (let k = 0; k < dim; k++) {
-                    let newCube = new Cube([(i - 0.5)* 2.0, (j - 0.5)*2.0, k*2.0 - 12.0], 5, datGui);
+                    let newCube = new Cube([(i - 0.5)* 2.0, (j - 0.5)*2.0, (k - 0.5)*2.0], 5, datGui);
                     newCube.state = [i, j, k];
                     shaderObjects.push(newCube);
                     this.cubeState.push(newCube);

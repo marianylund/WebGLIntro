@@ -107,10 +107,13 @@ const positions = [
                 direction = this.getUp();
                 break;
             case 'L':
+                direction = this.getLeft();
                 break;
             case 'B':
+                direction = this.getBack();
                 break;
             case 'D':
+                direction = this.getDown();
                 break;
             default:
                 console.log("Something wrong!. Group: ", group)
