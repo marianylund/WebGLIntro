@@ -84,7 +84,7 @@ const positions = [
                 const key = Object.keys(this.RotationGroups)[i];
                 const rot = Object.values(this.RotationGroups)[i];
 
-                datGui.add(this.RotationGroups, key, - Math.PI, Math.PI, Math.PI/8).name(key).onChange(v => {
+                datGui.add(this.RotationGroups, key, - Math.PI/2, Math.PI/2, Math.PI/8).name(key).onChange(v => {
                     if(v){
                         this.rotateGroup(key, v);
                     }

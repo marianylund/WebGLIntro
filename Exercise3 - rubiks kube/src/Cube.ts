@@ -1,5 +1,5 @@
 import { ShaderObject } from "./ShaderObject";
-import {Matrix4, Vector3, Quaternion, Euler} from "three";
+import {Matrix4, Vector3, Vector4} from "three";
 import { GUI } from "dat.gui";
 
 
@@ -85,28 +85,26 @@ const positions = [
     }
        
     rotateGroup(group:string, rot:number){
+        const pos = this.getPosition();
+        const point = new Vector3(0, 0, pos.z);
+        const posToPoint = new Vector3();
+        posToPoint.subVectors(pos, point);
+        const posToPoint4 = new Matrix4().makeTranslation(posToPoint.x, posToPoint.y, posToPoint.z);
 
+        const pointToPos = new Vector3();
+        pointToPos.subVectors(point, pos);
+        const pointToPos4 = new Matrix4().makeTranslation(pointToPos.x, pointToPos.y, pointToPos.z);
+
+        let direction = this.getForward();
         switch (group) {
             case 'F':
-                let rotationMatrix = new Matrix4().makeRotationAxis(this.getForward(), rot/2);
-                const newModelViewMatrix = new Matrix4().copy(this.modelViewMatrix);
-                console.log(" pos: ", new Vector3().setFromMatrixPosition(newModelViewMatrix), "\nrot: ", new Euler().setFromRotationMatrix(newModelViewMatrix));
-                newModelViewMatrix.multiply(this.getNegTranslationMatrix());
-                console.log("Translate back, origin is zero: ", new Vector3().setFromMatrixPosition(newModelViewMatrix));
-                newModelViewMatrix.multiply(rotationMatrix);
-                console.log("Rotate ", rot, " degrees: ", new Euler().setFromRotationMatrix(newModelViewMatrix));
-                newModelViewMatrix.multiply(this.getTranslationMatrixFromOrigin());
-                console.log("Translate back, pos from: " , this.getPosition()," to: ", new Vector3().setFromMatrixPosition(newModelViewMatrix));
-                this.setNewModelViewMatrix(newModelViewMatrix);
-                // mat4.translate(this.modelViewMatrix, this.modelViewMatrix, negPos);
-                // mat4.rotateZ(this.modelViewMatrix, this.modelViewMatrix, Math.PI/2.0);
-                // mat4.translate(this.modelViewMatrix, this.modelViewMatrix, pos);
-                // let rot = quat.create();
-                // mat4.getRotation(rot, this.modelViewMatrix);
+                direction = this.getForward();
                 break;
             case 'R':
+                direction = this.getRight();
                 break;
             case 'U':
+                direction = this.getUp();
                 break;
             case 'L':
                 break;
@@ -118,5 +116,15 @@ const positions = [
                 console.log("Something wrong!. Group: ", group)
                 break;
         }
+        // glm::vec4 pos_rot_h = rotate * glm::vec4( start_position - p, 1.0f );
+        // glm::vec3 pos_rot   = glm::vec3( pos_rot_h ) + p;
+
+        let rotationMatrix = new Matrix4().makeRotationAxis(direction, rot);
+        const newModelViewMatrix = new Matrix4().copy(this.modelViewMatrix);
+        
+        //rotationMatrix.multiply(pointToPos4);
+        rotationMatrix.multiply(newModelViewMatrix);
+        //rotationMatrix.multiply(posToPoint4);
+        this.setNewModelViewMatrix(rotationMatrix);
     }    
 }

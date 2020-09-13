@@ -40,15 +40,13 @@ export class ShaderObject{
     }
 
     getTranslationMatrix(){
+        this.position = new Vector3().setFromMatrixPosition(this.modelViewMatrix);
         return new Matrix4().makeTranslation(this.position.x, this.position.y, this.position.z);
     }
 
-    getTranslationMatrixFromOrigin(){
-        return new Matrix4().makeTranslation(0 + this.position.x, 0 + this.position.y, 0);
-    }
-
     getNegTranslationMatrix(){
-        return new Matrix4().makeTranslation(0 - this.position.x, 0 - this.position.y, 0);
+        this.position = new Vector3().setFromMatrixPosition(this.modelViewMatrix);
+        return new Matrix4().makeTranslation(- this.position.x, - this.position.y, - this.position.z);
     }
 
     getQRotation(){
