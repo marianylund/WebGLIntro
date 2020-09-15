@@ -110,43 +110,56 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
     
     const modelViewMatrix = mat4.create();
 
-    switch (getFirstUISettingIndex(OtherUISettings)) {
-      case 0:
-        mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
-        rotateObj(obj);
-        mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
-        break;
-      case 1:
-        mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
-        mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
-        rotateObj(obj);
-        break;
-      case 2:
-        mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
-        mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
-        rotateObj(obj);
-      break;
-      case 3:
-        mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
-        rotateObj(obj);
-        mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
-        break;
-      case 4:
-        rotateObj(obj);
-        mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
-        mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
-        break;
-      case 5:
-        rotateObj(obj);
-        mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
-        mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
-        break;
+    const point = obj.getPosition();
+    const negPoint = vec3.create();
+    negPoint.fill(-point[0], -point[1], -point[2]);
+
+    const pos = vec3.create();
+    point.fill(1, 1, -12);
+    const negPos = vec3.create();
+    negPoint.fill(-pos[0], -pos[1], -pos[2]);
+
+    mat4.translate(modelViewMatrix, modelViewMatrix, vec3.subtract(point, point, pos));
+    rotateObj(obj);
+    mat4.translate(modelViewMatrix, modelViewMatrix, vec3.subtract(negPoint, negPoint, negPos));
+
+    // switch (getFirstUISettingIndex(OtherUISettings)) {
+    //   case 0:
+    //     mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
+    //     rotateObj(obj);
+    //     mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
+    //     break;
+    //   case 1:
+    //     mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
+    //     mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
+    //     rotateObj(obj);
+    //     break;
+    //   case 2:
+    //     mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
+    //     mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
+    //     rotateObj(obj);
+    //   break;
+    //   case 3:
+    //     mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
+    //     rotateObj(obj);
+    //     mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
+    //     break;
+    //   case 4:
+    //     rotateObj(obj);
+    //     mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
+    //     mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
+    //     break;
+    //   case 5:
+    //     rotateObj(obj);
+    //     mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
+    //     mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
+    //     break;
     
-      default:
-        mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
-        rotateObj(obj);
-        mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
-    }
+    //   default:
+    //     mat4.translate(modelViewMatrix, modelViewMatrix, obj.getPosition());
+    //     rotateObj(obj);
+    //     mat4.scale(modelViewMatrix, modelViewMatrix, obj.getScale());
+    // }
     
     gl.useProgram(programInfo.program);
 

@@ -69,7 +69,6 @@ const positions = [
             for (let j = 0; j < dim; j++) {
                 for (let k = 0; k < dim; k++) {
                     let newCube = new Cube([(i - 0.5)* 2.0, (j - 0.5)*2.0, (k - 0.5)*2.0], 5, datGui);
-                    newCube.state = [i, j, k];
                     shaderObjects.push(newCube);
                     this.cubeState.push(newCube);
                 }
@@ -84,9 +83,10 @@ const positions = [
                 const key = Object.keys(this.RotationGroups)[i];
                 const rot = Object.values(this.RotationGroups)[i];
 
-                datGui.add(this.RotationGroups, key, - Math.PI/2, Math.PI/2, Math.PI/8).name(key).onChange(v => {
-                    if(v){
+                datGui.add(this.RotationGroups, key, -1, 1, 1).name(key).onChange(v => {
+                    if(v != 0){
                         this.rotateGroup(key, v);
+                        this.findDuplicated();
                     }
                 });
 
@@ -94,35 +94,26 @@ const positions = [
         }
     }
 
-    rotateGroup(group:string, rot:number){
-        const groupOfCubes = this.getAllCubesOfGroup(group);
-        groupOfCubes.forEach(cube => {
-            cube.rotateGroup(group, rot);
-        });
+    findDuplicated(){
+        const dupes = this.cubeState.filter((cube, index) => 
+            this.cubeState.some((cube2, index2) => 
+                index !== index2 &&
+                cube.getAllGroups().every((letter, letterPos) => letter === cube2.getAllGroups()[letterPos])
+            )
+        );
+        console.log(dupes);
+        return dupes;
     }
 
-    isInGroup(cube: Cube, group:string){
-        switch (group) {
-            case 'F':
-                return cube.state[2] == 1;
-            case 'R':
-                return cube.state[0] == 1;
-            case 'U':
-                return cube.state[1] == 1;
-            case 'L':
-                return cube.state[0] == 0;
-            case 'B':
-                return cube.state[2] == 0;
-            case 'D':
-                return cube.state[1] == 0;
-            default:
-                console.log("Something wrong!. Group: ", group)
-                break;
-        }
+    rotateGroup(group:string, val:number){
+        const groupOfCubes = this.getAllCubesOfGroup(group);
+        groupOfCubes.forEach(cube => {
+            cube.rotateGroup(group, val);
+        });
     }
     
     getAllCubesOfGroup(group:string){
-        return this.cubeState.filter(x => this.isInGroup(x, group));
+        return this.cubeState.filter(x => x.isInGroup(group));
     }
 
 }

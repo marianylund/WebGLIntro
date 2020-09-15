@@ -118,12 +118,27 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
   
   const primitives = [gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, gl.TRIANGLES, gl.TRIANGLE_STRIP, gl.TRIANGLE_FAN];
   
+  let posBuffer:WebGLBuffer;
+  let colBuffer:WebGLBuffer;
+  let indBuffer:WebGLBuffer;
+
   shaderObjects.forEach((obj: ShaderObject) => {
-    obj.initBuffers(gl);
-    setUpBuffer(3, obj.positionBuffer, programInfo.attribLocations.vertexPosition);
-    setUpBuffer(4, obj.colorBuffer, programInfo.attribLocations.vertexColor);
-    // Tell WebGL which indices to use to index the vertices
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.indexBuffer);
+    if(posBuffer == null){
+      obj.initBuffers(gl);
+      setUpBuffer(3, obj.positionBuffer, programInfo.attribLocations.vertexPosition);
+      setUpBuffer(4, obj.colorBuffer, programInfo.attribLocations.vertexColor);
+      // Tell WebGL which indices to use to index the vertices
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.indexBuffer);
+      posBuffer = obj.positionBuffer;
+      colBuffer = obj.colorBuffer;
+      indBuffer = obj.indexBuffer;
+    }else{
+      obj.setBuffers(posBuffer, indBuffer, colBuffer);
+      setUpBuffer(3, obj.positionBuffer, programInfo.attribLocations.vertexPosition);
+      setUpBuffer(4, obj.colorBuffer, programInfo.attribLocations.vertexColor);
+      // Tell WebGL which indices to use to index the vertices
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.indexBuffer);
+    }
     
     gl.useProgram(programInfo.program);
 

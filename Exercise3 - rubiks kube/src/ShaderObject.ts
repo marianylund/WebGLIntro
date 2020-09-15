@@ -93,6 +93,12 @@ export class ShaderObject{
 
     }
 
+    setBuffers(positionBuffer:WebGLBuffer, indexBuffer:WebGLBuffer, colorBuffer:WebGLBuffer){
+        this.positionBuffer = positionBuffer;
+        this.indexBuffer = indexBuffer;
+        this.colorBuffer = colorBuffer;
+    }
+
     getDirection(dir:Vector3){
         return dir.applyQuaternion(new Quaternion().setFromRotationMatrix(this.modelViewMatrix));
     }

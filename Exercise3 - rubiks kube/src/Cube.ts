@@ -79,12 +79,16 @@ const positions = [
 
     angleRot: number;
 
-    constructor(position: any = [0.0, 0.0, -6.0], objPrimitive: number = 5, datGui: GUI = null){
+    constructor(position: any = [0.0, 0.0, 0.0], objPrimitive: number = 5, datGui: GUI = null){
         super(36, positions, indices, colors, position, objPrimitive, datGui);
-        this.state = [];
+        this.state = [Math.round(this.position.x), Math.round(this.position.y), Math.round(this.position.z)];
+        console.assert(this.getAllGroups().length == 3, "Cube should always have 3 groups", position, this.getAllGroups());
     }
        
-    rotateGroup(group:string, rot:number){
+    rotateGroup(group:string, val:number){
+        console.assert(this.getAllGroups().length == 3, "Cube should always have 3 groups", this.position, this.getAllGroups());
+        console.log(group, " rotating from: ", this.position, " ", this.getAllGroups());
+
         const pos = this.getPosition();
         const point = new Vector3(0, 0, pos.z);
         const posToPoint = new Vector3();
@@ -122,12 +126,42 @@ const positions = [
         // glm::vec4 pos_rot_h = rotate * glm::vec4( start_position - p, 1.0f );
         // glm::vec3 pos_rot   = glm::vec3( pos_rot_h ) + p;
 
-        let rotationMatrix = new Matrix4().makeRotationAxis(direction, rot);
+        let rotationMatrix = new Matrix4().makeRotationAxis(direction, Math.PI/2 * -val);
         const newModelViewMatrix = new Matrix4().copy(this.modelViewMatrix);
         
         //rotationMatrix.multiply(pointToPos4);
         rotationMatrix.multiply(newModelViewMatrix);
         //rotationMatrix.multiply(posToPoint4);
         this.setNewModelViewMatrix(rotationMatrix);
+        this.position = this.position.round();
+        this.state = [this.position.x, this.position.y, this.position.z];
+        console.assert(this.getAllGroups().length == 3, "Cube should always have 3 groups", this.position, this.getAllGroups());
+        console.log(this.position, " ", this.getAllGroups());
     }    
+
+    isInGroup(group:string){
+        switch (group) {
+            case 'F':
+                return this.state[2] == -1;
+            case 'R':
+                return this.state[0] == 1;
+            case 'U':
+                return this.state[1] == 1;
+            case 'L':
+                return this.state[0] == -1;
+            case 'B':
+                return this.state[2] == 1;
+            case 'D':
+                return this.state[1] == -1;
+            default:
+                console.log("Something wrong!. Group: ", group)
+                break;
+        }
+    }
+
+    getAllGroups(){
+        let rotationGroups = ['F', 'R', 'U', 'L', 'B', 'D'];
+        rotationGroups = rotationGroups.filter((x:string) => this.isInGroup(x));
+        return rotationGroups;
+    }
 }
