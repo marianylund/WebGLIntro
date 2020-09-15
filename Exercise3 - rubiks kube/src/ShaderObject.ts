@@ -100,7 +100,8 @@ export class ShaderObject{
     }
 
     getDirection(dir:Vector3){
-        return dir.applyQuaternion(new Quaternion().setFromRotationMatrix(this.modelViewMatrix));
+        //return dir.applyQuaternion(new Quaternion().setFromRotationMatrix(this.modelViewMatrix));
+        return dir;
     }
 
     getUp(){

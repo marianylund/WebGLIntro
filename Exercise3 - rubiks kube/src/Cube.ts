@@ -86,18 +86,22 @@ const positions = [
     }
        
     rotateGroup(group:string, val:number){
+        if(!this.isInGroup(group)){
+            console.error("This cube is not parth of the ", group, " group");
+            return;
+        }
         console.assert(this.getAllGroups().length == 3, "Cube should always have 3 groups", this.position, this.getAllGroups());
         console.log(group, " rotating from: ", this.position, " ", this.getAllGroups());
 
-        const pos = this.getPosition();
-        const point = new Vector3(0, 0, pos.z);
-        const posToPoint = new Vector3();
-        posToPoint.subVectors(pos, point);
-        const posToPoint4 = new Matrix4().makeTranslation(posToPoint.x, posToPoint.y, posToPoint.z);
+        // const pos = this.getPosition();
+        // const point = new Vector3(0, 0, pos.z);
+        // const posToPoint = new Vector3();
+        // posToPoint.subVectors(pos, point);
+        // const posToPoint4 = new Matrix4().makeTranslation(posToPoint.x, posToPoint.y, posToPoint.z);
 
-        const pointToPos = new Vector3();
-        pointToPos.subVectors(point, pos);
-        const pointToPos4 = new Matrix4().makeTranslation(pointToPos.x, pointToPos.y, pointToPos.z);
+        // const pointToPos = new Vector3();
+        // pointToPos.subVectors(point, pos);
+        // const pointToPos4 = new Matrix4().makeTranslation(pointToPos.x, pointToPos.y, pointToPos.z);
 
         let direction = this.getForward();
         switch (group) {
@@ -160,7 +164,7 @@ const positions = [
     }
 
     getAllGroups(){
-        let rotationGroups = ['F', 'R', 'U', 'L', 'B', 'D'];
+        let rotationGroups = ['L', 'R', 'D', 'U', 'F', 'B'];
         rotationGroups = rotationGroups.filter((x:string) => this.isInGroup(x));
         return rotationGroups;
     }

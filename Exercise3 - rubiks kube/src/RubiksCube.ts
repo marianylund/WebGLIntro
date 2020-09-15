@@ -1,6 +1,7 @@
 import { ShaderObject } from "./ShaderObject";
 import { Cube } from "./Cube";
 import { GUI } from "dat.gui";
+import { Vector3 } from "three";
 
 const positions = [
     // Front face
@@ -60,16 +61,17 @@ const positions = [
 
   export class RubiksCube{
       cubeState: Cube[];
-      RotationGroups = {'F': 0, 'R':0, 'U':0, 'L':0, 'B':0, 'D':0};
+      RotationGroups = {'L':0, 'R':0, 'D':0,  'U':0, 'F': 0, 'B':0};
       
-    constructor(shaderObjects: ShaderObject[], dim: number = 2, datGui: GUI = null){
+    constructor(shaderObjects: ShaderObject[] = null, dim: number = 2, datGui: GUI = null){
 
         this.cubeState = [];
         for (let i = 0; i < dim; i++) {
             for (let j = 0; j < dim; j++) {
                 for (let k = 0; k < dim; k++) {
                     let newCube = new Cube([(i - 0.5)* 2.0, (j - 0.5)*2.0, (k - 0.5)*2.0], 5, datGui);
-                    shaderObjects.push(newCube);
+                    if(shaderObjects != null)
+                        shaderObjects.push(newCube);
                     this.cubeState.push(newCube);
                 }
             }
@@ -114,6 +116,14 @@ const positions = [
     
     getAllCubesOfGroup(group:string){
         return this.cubeState.filter(x => x.isInGroup(group));
+    }
+
+    getCubeByPosition(x:number, y:number, z:number){
+        return this.cubeState.find(cube => cube.position.equals(new Vector3(x, y, z)));
+    }
+
+    getCubeByGroups(groups:string[]){
+        return this.cubeState.find(cube => cube.getAllGroups().every((letter) => groups.includes(letter)));
     }
 
 }
