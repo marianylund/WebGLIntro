@@ -1,5 +1,5 @@
 import { ShaderObject } from "./ShaderObject";
-import {Matrix4, Vector3, Vector4} from "three";
+import {Matrix4, MathUtils, Vector3, Quaternion, QuadraticBezierCurve} from "three";
 import { GUI } from "dat.gui";
 
 
@@ -78,6 +78,7 @@ const positions = [
     modelViewMatrix: Matrix4;
 
     angleRot: number;
+    isRotating: boolean = false;
 
     constructor(position: any = [0.0, 0.0, 0.0], objPrimitive: number = 5, datGui: GUI = null){
         super(36, positions, indices, colors, position, objPrimitive, datGui);
@@ -91,15 +92,9 @@ const positions = [
             return;
         }
 
-        // const pos = this.getPosition();
-        // const point = new Vector3(0, 0, pos.z);
-        // const posToPoint = new Vector3();
-        // posToPoint.subVectors(pos, point);
-        // const posToPoint4 = new Matrix4().makeTranslation(posToPoint.x, posToPoint.y, posToPoint.z);
-
-        // const pointToPos = new Vector3();
-        // pointToPos.subVectors(point, pos);
-        // const pointToPos4 = new Matrix4().makeTranslation(pointToPos.x, pointToPos.y, pointToPos.z);
+        if(this.isRotating){
+            return;
+        }
 
         let direction = this.getForward();
         switch (group) {
@@ -125,20 +120,51 @@ const positions = [
                 console.log("Something wrong!. Group: ", group)
                 break;
         }
-        // glm::vec4 pos_rot_h = rotate * glm::vec4( start_position - p, 1.0f );
-        // glm::vec3 pos_rot   = glm::vec3( pos_rot_h ) + p;
+        this.isRotating = true;
+        this.rotatingAngle = Math.PI/2 * -val;
+        this.rotatingDirection = direction;
+        this.rotatedSoFar = 0.0;
+        this.startModelMatrix = this.getModelViewMatrix();
+    }
 
-        let rotationMatrix = new Matrix4().makeRotationAxis(direction, Math.PI/2 * -val);
-        const newModelViewMatrix = new Matrix4().copy(this.modelViewMatrix);
-        
-        //rotationMatrix.multiply(pointToPos4);
-        rotationMatrix.multiply(newModelViewMatrix);
-        //rotationMatrix.multiply(posToPoint4);
-        this.setNewModelViewMatrix(rotationMatrix);
-        this.position = this.position.round();
-        this.state = [this.position.x, this.position.y, this.position.z];
-        console.assert(this.getAllGroups().length == 3, "Cube should always have 3 groups", this.position, this.getAllGroups());
-    }    
+    rotatingAngle: number;
+    rotatingDirection: Vector3;
+    rotatedSoFar: number = 0.0;
+    rotatingSpeed: number = 0.5;
+    delta:number;
+    startModelMatrix: Matrix4;
+
+    getModelViewMatrix(delta: number = 0.0){
+        if(this.isRotating){
+            this.delta = delta;
+            this.interpolateRotation();
+        }
+        return this.modelViewMatrix;
+    }
+    
+    interpolateRotation(){
+        const lerpVal = this.delta/this.rotatingSpeed;
+        const lerpedRot = this.rotatingAngle * lerpVal;
+        this.rotatedSoFar += lerpedRot;
+
+        if(Math.abs(this.rotatedSoFar) >= Math.abs(this.rotatingAngle)){
+            let rotationMatrix = new Matrix4().makeRotationAxis(this.rotatingDirection, this.rotatingAngle);
+            const newModelViewMatrix = new Matrix4().copy(this.startModelMatrix);
+            
+            rotationMatrix.multiply(newModelViewMatrix);
+            this.setNewModelViewMatrix(rotationMatrix);
+            this.position = this.position.round();
+            this.state = [this.position.x, this.position.y, this.position.z];
+            this.isRotating = false;
+            console.assert(this.getAllGroups().length == 3, "Cube should always have 3 groups", this.position, this.getAllGroups());
+        }else{
+            let rotationMatrix = new Matrix4().makeRotationAxis(this.rotatingDirection, lerpedRot);
+            const newModelViewMatrix = new Matrix4().copy(this.modelViewMatrix);
+            
+            rotationMatrix.multiply(newModelViewMatrix);
+            this.setNewModelViewMatrix(rotationMatrix);
+        }
+    }
 
     isInGroup(group:string){
         switch (group) {

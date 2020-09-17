@@ -94,8 +94,7 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: S
   const negCameraTranslationMatrix = new Matrix4().makeTranslation(-cameraPosition.x, -cameraPosition.y, -cameraPosition.z);
   
   let eyeVector = new Vector3(cameraPosition.z*Math.cos(phi) * Math.sin(theta), cameraPosition.z*Math.sin(phi)*Math.sin(theta), cameraPosition.z*Math.cos(theta));
-  //return dir.applyQuaternion(new Quaternion().setFromRotationMatrix(this.modelViewMatrix));
-  rotationMatrix.lookAt(eyeVector, new Vector3(0, 0, 0), new Vector3(0, 1, 0).applyQuaternion(new Quaternion().setFromRotationMatrix(cameraTranslationMatrix)));
+  rotationMatrix.lookAt(eyeVector, new Vector3(0, 0, 0), new Vector3(0, 1, 0));
   projectionMatrix.makePerspective(left, left + width, top, top - height, zNear, zFar);
   projectionMatrix.multiply(cameraTranslationMatrix);
   projectionMatrix.multiply(rotationMatrix);
@@ -137,7 +136,7 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: S
     gl.uniformMatrix4fv(
         programInfo.uniformLocations.modelViewMatrix,
         false,
-        obj.getModelViewMatrix().toArray());
+        obj.getModelViewMatrix(deltaTime).toArray());
 
     const type = gl.UNSIGNED_SHORT;
     const offset = 0;

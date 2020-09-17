@@ -57,7 +57,7 @@ export class ShaderObject{
         return new Euler().setFromRotationMatrix(this.modelViewMatrix);
     }
 
-    getModelViewMatrix(){
+    getModelViewMatrix(delta: number = 0.0){
         return this.modelViewMatrix;
     }
 
