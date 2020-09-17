@@ -18,8 +18,12 @@ uniform mat4 uModelViewMatrix;
 uniform mat4 uProjectionMatrix;
 
 varying lowp vec4 vColor;
+varying lowp vec4 vPos;
+varying lowp vec4 glPos;
 
 void main(void) {
     gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+    vPos = aVertexPosition;
+    glPos = uModelViewMatrix * aVertexPosition;
     vColor = aVertexColor;
 }

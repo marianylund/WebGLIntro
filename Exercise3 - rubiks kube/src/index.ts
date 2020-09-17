@@ -1,10 +1,10 @@
 import {GUI} from 'dat.gui'; 
 import { ShadersLoader } from './ShadersLoader';
 import { ShaderObject } from './ShaderObject';
-import {Matrix4, Vector3} from "three";
+import {Matrix4, Quaternion, Vector3} from "three";
 import { RubiksCube } from './RubiksCube';
 
-const PrimitivesUISettings = {POINTS: false, LINES: false, LINE_STRIP: false, LINE_LOOP: true, TRIANGLES: false, TRIANGLE_STRIP: false, TRIANGLE_FAN: false};
+const PrimitivesUISettings = {POINTS: false, LINES: false, LINE_STRIP: false, LINE_LOOP: false, TRIANGLES: true, TRIANGLE_STRIP: false, TRIANGLE_FAN: false};
 const RotationGroups = ['F', 'R', 'U', 'L', 'B', 'D'];
 
 let gl:WebGLRenderingContext;
@@ -15,6 +15,7 @@ let cameraPosition: Vector3 = new Vector3(0.0, 0.0, -12.0);
 const mousePosition: Vector3 = new Vector3(0.0, 0.0, 0.0);
 const cameraSpeed = 0.1;
 let zoom = 0.02;
+let theta:number = 0, phi:number = 0;
 
 function main() {
   const canvas = document.createElement('canvas');
@@ -49,21 +50,7 @@ function main() {
 
   addObjectsToDraw(shaderObjects);
 
-  // onmousemove = function(e){
-  //   //console.log("mouse location:", e.clientX, e.clientY);
-  //   mousePosition[0] = e.clientX/canvas.width * 10.0;
-  //   mousePosition[1] = e.clientY/window.innerHeight * 10.0;
-    
-  // }
-
-  canvas.addEventListener('wheel', function(event){
-    event.preventDefault();
-
-    zoom += event.deltaY * -0.001;
-
-    // Restrict scale
-    zoom = Math.min(Math.max(.005, zoom), 0.1);
-  })
+  AddInputListeners(canvas);
 
   var then = 0;
 
@@ -81,8 +68,8 @@ function main() {
   requestAnimationFrame(render);
 }
 
-function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: any, deltaTime:number) {
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
+function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: ShaderObject[], deltaTime:number) {
+  gl.clearColor(0.894, 0.831, 0.847, 1.0);  // Clear to black, fully opaque
   gl.clearDepth(1.0);                 // Clear everything
   gl.enable(gl.DEPTH_TEST);           // Enable depth testing
   gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
@@ -90,13 +77,6 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
   // Clear the canvas before we start drawing on it.
 
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  // Create a perspective matrix, a special matrix that is
-  // used to simulate the distortion of perspective in a camera.
-  // Our field of view is 45 degrees, with a width/height
-  // ratio that matches the display size of the canvas
-  // and we only want to see objects between 0.1 units
-  // and 100 units away from the camera.
 
   const fieldOfView = 45 * Math.PI / 180;   // in radians
   const aspect = gl.canvas.width / gl.canvas.height;
@@ -109,12 +89,19 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
   let left = - 0.5 * width;
 
   const projectionMatrix = new Matrix4();
+  const rotationMatrix = new Matrix4();
   const cameraTranslationMatrix = new Matrix4().makeTranslation(cameraPosition.x, cameraPosition.y, cameraPosition.z);
+  const negCameraTranslationMatrix = new Matrix4().makeTranslation(-cameraPosition.x, -cameraPosition.y, -cameraPosition.z);
   
-  // note: glmatrix.js always has the first argument
-  // as the destination to receive the result.
+  let eyeVector = new Vector3(cameraPosition.z*Math.cos(phi) * Math.sin(theta), cameraPosition.z*Math.sin(phi)*Math.sin(theta), cameraPosition.z*Math.cos(theta));
+  //return dir.applyQuaternion(new Quaternion().setFromRotationMatrix(this.modelViewMatrix));
+  rotationMatrix.lookAt(eyeVector, new Vector3(0, 0, 0), new Vector3(0, 1, 0).applyQuaternion(new Quaternion().setFromRotationMatrix(cameraTranslationMatrix)));
   projectionMatrix.makePerspective(left, left + width, top, top - height, zNear, zFar);
   projectionMatrix.multiply(cameraTranslationMatrix);
+  projectionMatrix.multiply(rotationMatrix);
+  projectionMatrix.multiply(negCameraTranslationMatrix);
+  projectionMatrix.multiply(cameraTranslationMatrix);
+
   
   const primitives = [gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, gl.TRIANGLES, gl.TRIANGLE_STRIP, gl.TRIANGLE_FAN];
   
@@ -136,7 +123,7 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
       obj.setBuffers(posBuffer, indBuffer, colBuffer);
       setUpBuffer(3, obj.positionBuffer, programInfo.attribLocations.vertexPosition);
       setUpBuffer(4, obj.colorBuffer, programInfo.attribLocations.vertexColor);
-      // Tell WebGL which indices to use to index the vertices
+
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.indexBuffer);
     }
     
@@ -159,8 +146,7 @@ function drawScene(gl: WebGLRenderingContext, programInfo: any, shaderObjects: a
       indexPrim = 4;
     }
 
-    gl.drawElements(primitives[indexPrim], obj.vertexNum, type, offset);
-    
+    gl.drawElements(gl.TRIANGLES, obj.vertexNum, type, offset);
   });
 
 
@@ -208,10 +194,47 @@ function initGUI(datGui:GUI){
 }
 
 function addObjectsToDraw(shaderObjects: ShaderObject[]){
-
-  // const square7 = new Cube();
-  // shaderObjects.push(square7);
   new RubiksCube(shaderObjects, 2, gui);
+}
+
+function AddInputListeners(canvas:HTMLCanvasElement){
+
+  let oldX:number, oldY:number;
+  let rotate: boolean = false;
+  const rotateMultiplier = 0.01;
+
+  canvas.addEventListener('mousedown', function(event){
+    rotate = false;
+    if(event.button == 0){ // right button
+      oldX = event.x;
+      oldY = event.y;
+      rotate = true;
+    } 
+  });
+
+  canvas.addEventListener('mouseup', function(event){
+    if(event.button == 0){ // right button
+      rotate = false;
+    } 
+  });
+
+  canvas.addEventListener('mousemove', function(event){
+    if(rotate) {
+      theta += (event.x-oldX)*rotateMultiplier;
+      phi   += (event.y-oldY)*rotateMultiplier;
+    }
+    oldX = event.x; 
+    oldY = event.y; 
+  });
+
+  canvas.addEventListener('wheel', function(event){
+    event.preventDefault();
+
+    zoom += event.deltaY * -0.001;
+
+    // Restrict scale
+    zoom = Math.min(Math.max(.005, zoom), 0.1);
+  });
 }
 
 function onKeyDown(event: KeyboardEvent)

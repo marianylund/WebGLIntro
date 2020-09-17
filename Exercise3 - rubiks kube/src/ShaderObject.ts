@@ -99,32 +99,27 @@ export class ShaderObject{
         this.colorBuffer = colorBuffer;
     }
 
-    getDirection(dir:Vector3){
-        //return dir.applyQuaternion(new Quaternion().setFromRotationMatrix(this.modelViewMatrix));
-        return dir;
-    }
-
     getUp(){
-        return this.getDirection(new Vector3(0, 1, 0));
+        return new Vector3(0, 1, 0);
     }
 
     getRight(){
-        return this.getDirection(new Vector3(1, 0, 0));
+        return new Vector3(1, 0, 0);
     }
 
     getForward(){
-        return this.getDirection(new Vector3(0, 0, 1));
+        return new Vector3(0, 0, 1);
     }
 
     getDown(){
-        return this.getDirection(new Vector3(0, -1, 0));
+        return new Vector3(0, -1, 0);
     }
 
     getLeft(){
-        return this.getDirection(new Vector3(-1, 0, 0));
+        return new Vector3(-1, 0, 0);
     }
 
     getBack(){
-        return this.getDirection(new Vector3(0, 0, 1));
+        return new Vector3(0, 0, 1);
     }
 }

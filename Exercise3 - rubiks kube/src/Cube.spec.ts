@@ -27,9 +27,4 @@ describe("Cubes", () => {
         expect(JSON.stringify(fdl.position)).to.equal(JSON.stringify(new Vector3(-1, -1, -1)));
         expect(fdl.getAllGroups()).to.contain.all.members(['L', 'D', 'F']);
     });
-    it("should rotate the luf as left group clockwise and change up to down", () => {
-        fdl.rotateGroup('L', -1);
-        expect(JSON.stringify(fdl.position)).to.equal(JSON.stringify(new Vector3(-1, -1, -1)));
-        expect(fdl.getAllGroups()).to.contain.all.members(['L', 'D', 'F']);
-    });
 })

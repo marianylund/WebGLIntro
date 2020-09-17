@@ -88,7 +88,6 @@ const positions = [
                 datGui.add(this.RotationGroups, key, -1, 1, 1).name(key).onChange(v => {
                     if(v != 0){
                         this.rotateGroup(key, v);
-                        this.findDuplicated();
                     }
                 });
 

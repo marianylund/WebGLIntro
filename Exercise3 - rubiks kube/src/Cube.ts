@@ -53,9 +53,9 @@ const positions = [
   const faceColors = [
     [1.0,  1.0,  1.0,  1.0],    // Front face: white
     [1.0,  0.0,  0.0,  1.0],    // Back face: red
-    [0.0,  1.0,  0.0,  1.0],    // Top face: green
+    [0.0,  0.95,  0.0,  1.0],    // Top face: green
     [0.0,  0.0,  1.0,  1.0],    // Bottom face: blue
-    [1.0,  1.0,  0.0,  1.0],    // Right face: yellow
+    [0.0,  0.0,  0.0,  1.0],    // Right face: black
     [1.0,  0.0,  1.0,  1.0],    // Left face: purple
   ];
 
@@ -90,8 +90,6 @@ const positions = [
             console.error("This cube is not parth of the ", group, " group");
             return;
         }
-        console.assert(this.getAllGroups().length == 3, "Cube should always have 3 groups", this.position, this.getAllGroups());
-        console.log(group, " rotating from: ", this.position, " ", this.getAllGroups());
 
         // const pos = this.getPosition();
         // const point = new Vector3(0, 0, pos.z);
@@ -140,7 +138,6 @@ const positions = [
         this.position = this.position.round();
         this.state = [this.position.x, this.position.y, this.position.z];
         console.assert(this.getAllGroups().length == 3, "Cube should always have 3 groups", this.position, this.getAllGroups());
-        console.log(this.position, " ", this.getAllGroups());
     }    
 
     isInGroup(group:string){
