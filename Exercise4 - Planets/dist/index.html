@@ -11,8 +11,18 @@
 		integrity="sha512-zhHQR0/H5SEBL3Wn6yYSaTTZej12z0hVZKOv3TwCUXT1z5qeqGcXJLLrbERYRScEDDpYIJhPC1fk31gqR783iQ=="
 		crossorigin="anonymous" defer>
 </script>
-	</head>
-	<body>
-		<script src="bundle.js"></script>
-	</body>
+<script src="bundle.js"></script>
+
+</head>
+	
+	<a-scene>
+		<a-assets>
+			<img id="groundTexture" src="https://cdn.aframe.io/a-painter/images/floor.jpg">
+			<img id="skyTexture" src="https://cdn.aframe.io/a-painter/images/sky.jpg">
+		</a-assets>
+		<a-entity camera look-controls wasd-controls position="0 1.6 5"></a-entity>
+		<a-cylinder id="ground" src="#groundTexture" radius="30" height="0.1"></a-cylinder>
+		
+		<a-sky id="background" src="#skyTexture" theta-length="90" radius="30"></a-sky>
+	</a-scene>
 </html>
