@@ -1,3 +1,6 @@
+// https://github.com/mozdevs/aframe-demo
+// images have been released by NASA in the public domain: images/earth.png, images/moon.jpg, images/stars.jpg.
+
 import {GUI} from 'dat.gui'; 
 import * as THREE from "three";
 import * as AFRAME from "aframe";
@@ -15,7 +18,7 @@ function main() {
 
   scene = document.querySelector('a-scene').object3D;
   console.log(scene.isScene);
-  
+
   // var camera = new PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 
   // renderer = new WebGLRenderer();
@@ -30,11 +33,11 @@ function main() {
 
   // var geometry = new BoxGeometry();
   // var material = new MeshBasicMaterial( { color: 0x00ff00 } );
-  var cube = new AstronomicalObj().mesh;
-  scene.add(cube );
+  // var cube = new AstronomicalObj().mesh;
+  // scene.add(cube );
 
-  const aSphere = document.createElement('a-sphere');
-  document.querySelector('a-scene').appendChild(aSphere);
+  // const aSphere = document.createElement('a-sphere');
+  // document.querySelector('a-scene').appendChild(aSphere);
 
   // camera.position.z = 5;
 

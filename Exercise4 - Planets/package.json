@@ -18,7 +18,7 @@
     "@types/aframe": "^1.0.1",
     "@types/chai": "^4.2.12",
     "@types/mocha": "^8.0.3",
-    "aframe": "^1.0.4",
+    "aframe": "1.0.0",
     "chai": "^4.2.0",
     "dat.gui": "^0.7.6",
     "gl-matrix": "^3.3.0",
