@@ -19,6 +19,30 @@ function main() {
   scene = document.querySelector('a-scene').object3D;
   console.log(scene.isScene);
 
+
+//   var materials = [new THREE.MeshBasicMaterial({
+//     color: 0xFF0000
+// }), new THREE.MeshBasicMaterial({
+//     color: 0x00FF00
+// })]
+
+//this.el.getObject3D('mesh').material = materials;
+//console.log(sceneEl.querySelectorAll('a-box'));
+
+
+
+  // const aSphereJupyter = document.createElement('a-sphere');
+  // aSphereJupyter.setAttribute('src', 'src/images/jupyter.jpg');
+  // aSphereJupyter.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 80000');
+  // const elJupyter = document.createElement('a-entity');
+  // elJupyter.id = "jupyter";
+  // elJupyter.setAttribute('position', '0 0 -10');
+  // elJupyter.appendChild(aSphereJupyter);
+  // elJupyter.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 100000');
+  // document.querySelector('a-scene').appendChild(elJupyter);
+  // document.querySelector('a-scene').appendChild(aSphere);
+
+
   // var camera = new PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 
   // renderer = new WebGLRenderer();
