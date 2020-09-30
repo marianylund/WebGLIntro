@@ -127,7 +127,7 @@
 		<img id="texture-emissive-sun" src="src/images/sun_emission.jpg">
 	</a-assets>
 
-	<a-camera id="main-camera" cursor position="100 0 0" wasd-controls="acceleration: 1000"></a-camera>
+	<a-camera id="main-camera" uimenu fov="70" position="100 0 0" look-controls wasd-controls="acceleration: 1000"></a-camera>
 	<a-sky src="src/images/stars.jpg"></a-sky>
 
 	<a-entity id="solar-system">
@@ -144,8 +144,8 @@
 		<a-entity id="venus" astro = "radius: 0.4745; position: 7; rotationSun: 244; rotationSelf: 116.8"></a-entity>
 
 		<a-entity id="earth-and-moon" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 100000">
-			<a-entity id="earth" position="110 0 0" >
-				<a-sphere id="earthSphere" radius="0.5"
+			<a-entity id="earth-sphere" astro = "radius: 0" position="110 0 0" >
+				<a-sphere id="earth" radius="0.5"
 					position="0 0 0"
 					rotation="0 0 0"
 					src="src/images/earth.png"

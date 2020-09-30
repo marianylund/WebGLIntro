@@ -7,15 +7,9 @@ import * as THREE from "three";
 import * as AFRAME from "aframe";
 import { ShadersLoader } from './ShadersLoader';
 
-
-//let renderer:WebGLRenderer;
-let scene: THREE.Scene;
-let gui: GUI;
-//let scene: Scene;
-let zoom = 0.02;
-
 const sunOffset = 100
 const clock = new THREE.Clock();
+
 let customUniforms = {
       baseTexture: 	{ type: "t", value: new THREE.Texture() },
       baseSpeed:		{ type: "f", value: 0 },
@@ -54,10 +48,14 @@ AFRAME.registerComponent('astro', {
 },
 
   init: function () {
+    if(this.data.radius == 0){
+      return;
+    }
     this.el.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; easing:linear; dur: ' + (this.data.rotationSun *100000));
     const sphere = document.createElement('a-entity');
     sphere.setAttribute('material', 'src: #texture-' + this.el.id);
     sphere.setAttribute('geometry', 'primitive: sphere');
+    sphere.setAttribute('id', this.el.id + '-sphere');
     sphere.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; easing:linear; dur: ' + (this.data.rotationSelf * 25000));
     sphere.setAttribute('position', sunOffset + this.data.position + " 0 0");
     sphere.setAttribute('scale', this.data.radius + " " + this.data.radius + " " + this.data.radius);
@@ -163,69 +161,53 @@ AFRAME.registerComponent('sunglow', {
   }
 });
 
-function main() {
-  //AFRAME.registerComponent('foo', main);
+const PlanetsSettings = {Mercury: false, Venus: false, Earth: false, Mars: false, Jupiter: false, Saturn: false, Uranus: false, Neptune: false};
+let planet_id = "";
 
-  scene = document.querySelector('a-scene').object3D;
-  console.log("IS SCENE: ", scene.isScene);
-  
+AFRAME.registerComponent('uimenu', {
+  schema: {
+    radius: {
+      type: 'number',
+      default: 1
+    },
+},
 
-//   var materials = [new THREE.MeshBasicMaterial({
-//     color: 0xFF0000
-// }), new THREE.MeshBasicMaterial({
-//     color: 0x00FF00
-// })]
+  init: function () {
+    const datGui = new GUI();
 
-//this.el.getObject3D('mesh').material = materials;
-//console.log(sceneEl.querySelectorAll('a-box'));
+    const primitivesFolder = datGui.addFolder("Follow Planets");
+    for (let i = 0; i < Object.keys(PlanetsSettings).length; i++) {
+      const UIKey = Object.keys(PlanetsSettings)[i];
+      primitivesFolder.add(PlanetsSettings, UIKey).name(UIKey).onChange(v => {
+        console.log("Change to: ", v);
+        if(v){
+          let indexPrim = getFirstUISettingIndex(PlanetsSettings);
+          planet_id = '#' + Object.keys(PlanetsSettings)[indexPrim].toLowerCase() + '-sphere';
+          console.log("Planed_id", planet_id);
 
+        }else{
+          planet_id = "";
+        }
+      })
+    }
+  },
+  tick: function() {
+    if( planet_id != ""){
+      const objToMoveTo = document.querySelector(planet_id).object3D;
+      const mainCamera = document.querySelector('#main-camera').object3D;
+      var newVec = new THREE.Vector3(); // create once an reuse it
+      objToMoveTo.getWorldPosition(newVec);
+      mainCamera.position.set(newVec.x + objToMoveTo.scale.x  * 1.1, newVec.y  + objToMoveTo.scale.y * 1.1, newVec.z + objToMoveTo.scale.z * 1.1);
+    }
+  }
+});
 
+function getFirstUISettingIndex(UISettings: any){
+  for (let i = 0; i < Object.keys(UISettings).length; i++) {
+    if(Object.values(UISettings)[i]){
+      return i;
+    }
+  }
+  return -1;
+}
 
-  // const aSphereJupyter = document.createElement('a-sphere');
-  // aSphereJupyter.setAttribute('src', 'src/images/jupyter.jpg');
-  // aSphereJupyter.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 80000');
-  // const elJupyter = document.createElement('a-entity');
-  // elJupyter.id = "jupyter";
-  // elJupyter.setAttribute('position', '0 0 -10');
-  // elJupyter.appendChild(aSphereJupyter);
-  // elJupyter.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 100000');
-  // document.querySelector('a-scene').appendChild(elJupyter);
-  // document.querySelector('a-scene').appendChild(aSphere);
-
-
-  // var camera = new PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-
-  // renderer = new WebGLRenderer();
-  // renderer.setSize( window.innerWidth, window.innerHeight );
-  // document.querySelector('body').appendChild(renderer.domElement);
-  
-  // // Only continue if WebGL is available and working
-  // if (renderer === null) {
-  //   alert("Unable to initialize WebGL. Your browser or machine may not support it.");
-  //   return;
-  // }
-
-  // var geometry = new BoxGeometry();
-  // var material = new MeshBasicMaterial( { color: 0x00ff00 } );
-  // var cube = new AstronomicalObj().mesh;
-  // scene.add(cube );
-
-  // const aSphere = document.createElement('a-sphere');
-  // document.querySelector('a-scene').appendChild(aSphere);
-
-  // camera.position.z = 5;
-
-  // function animate() {
-  //   requestAnimationFrame( animate );
-  //   cube.rotation.x += 0.01;
-  //   cube.rotation.y += 0.01;
-  //   renderer.render( scene, camera );
-  // }
-  // animate();
-
-  };
-
-
-
-  
-window.onload = main;
