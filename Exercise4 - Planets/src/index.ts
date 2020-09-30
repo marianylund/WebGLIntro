@@ -1,5 +1,6 @@
 // https://github.com/mozdevs/aframe-demo
 // images have been released by NASA in the public domain: images/earth.png, images/moon.jpg, images/stars.jpg.
+// https://nssdc.gsfc.nasa.gov/planetary/factsheet/planet_table_ratio.html
 
 import {GUI} from 'dat.gui'; 
 import * as THREE from "three";
@@ -53,11 +54,11 @@ AFRAME.registerComponent('astro', {
 },
 
   init: function () {
-    this.el.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; easing:linear; dur: ' + this.data.rotationSun);
+    this.el.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; easing:linear; dur: ' + (this.data.rotationSun *100000));
     const sphere = document.createElement('a-entity');
     sphere.setAttribute('material', 'src: #texture-' + this.el.id);
     sphere.setAttribute('geometry', 'primitive: sphere');
-    sphere.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; easing:linear; dur: ' + this.data.rotationSelf);
+    sphere.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; easing:linear; dur: ' + (this.data.rotationSelf * 25000));
     sphere.setAttribute('position', sunOffset + this.data.position + " 0 0");
     sphere.setAttribute('scale', this.data.radius + " " + this.data.radius + " " + this.data.radius);
     this.el.appendChild(sphere);
@@ -78,6 +79,10 @@ AFRAME.registerComponent('sunglow', {
     radius: {
       type: 'number',
       default: 1
+    },
+    rotationSelf: {
+      type: 'number',
+      default: 4000
     },
 },
 
@@ -144,32 +149,12 @@ AFRAME.registerComponent('sunglow', {
 
     var ballGeometry = new AFRAME.THREE.SphereGeometry(this.data.radius, 64, 64);
     var ball = new AFRAME.THREE.Mesh(ballGeometry, customMaterial);
+    this.el.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; easing:linear; dur: ' + (this.data.rotationSelf * 25000));
     this.el.setObject3D('mesh', ball);
 
-    var mainCamera = document.querySelector('#main-camera').object3D;
-    var customGlowMaterial = new THREE.ShaderMaterial( 
-      {
-          uniforms: 
-        { 
-          "c":   { type: "f", value: 0.8 },
-          "p":   { type: "f", value: 1.8 },
-          glowColor: { type: "c", value: new THREE.Color(0xffff00) },
-          viewVector: { type: "v3", value: mainCamera.position }
-        },
-        vertexShader:   document.getElementById( 'glowVertexShader'   ).textContent,
-        fragmentShader: document.getElementById( 'glowFragmentShader' ).textContent,
-        side: THREE.FrontSide,
-        blending: THREE.AdditiveBlending,
-        transparent: true
-      });
-      customGlowMaterial.side = THREE.BackSide;
 
-      
-      const sunglow = new AFRAME.THREE.Mesh( ballGeometry.clone(), customGlowMaterial.clone() );
-      sunglow.scale.multiplyScalar(1.3);
-      const sphere = document.createElement('a-entity');
-      sphere.setObject3D('mesh', sunglow);
-      this.el.parentElement.appendChild(sphere);
+
+
   },
 
   tick: function () {

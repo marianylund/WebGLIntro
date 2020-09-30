@@ -127,41 +127,43 @@
 		<img id="texture-emissive-sun" src="src/images/sun_emission.jpg">
 	</a-assets>
 
-	<a-camera id="main-camera" cursor position="100 0 0"></a-camera>
+	<a-camera id="main-camera" cursor position="100 0 0" wasd-controls="acceleration: 1000"></a-camera>
 	<a-sky src="src/images/stars.jpg"></a-sky>
 
 	<a-entity id="solar-system">
 
 		<a-entity id="sun">
-			<a-sphere id="sunSphere" sunglow="radius: 50"></a-sphere>
+			<a-sphere id="sunSphere" sunglow="radius: 50; rotationSelf: 27;"></a-sphere>
 
 			<a-entity light="type: ambient; color: #fff; intensity: 0.2"></a-entity>
 			<a-light color="white" position="0 0 0" type="point" intensity="1"></a-light>
 		</a-entity>
 		
-		<a-entity id="mercury" astro = "radius: 0.1915; position: 4; rotationSun: 112000; rotationSelf: 4000"></a-entity>
-		<a-entity id="venus" astro = "radius: 0.4745; position: 7; rotationSun: 112000; rotationSelf: 4000"></a-entity>
+		<a-entity id="mercury" astro = "radius: 0.1915; position: 4; rotationSun: 58.8; rotationSelf: 175.9"></a-entity>
+		<!-- venus rotates the other way around -->
+		<a-entity id="venus" astro = "radius: 0.4745; position: 7; rotationSun: 244; rotationSelf: 116.8"></a-entity>
 
 		<a-entity id="earth-and-moon" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 100000">
-			<a-entity id="earth" position="60 0 0" >
+			<a-entity id="earth" position="110 0 0" >
 				<a-sphere id="earthSphere" radius="0.5"
 					position="0 0 0"
 					rotation="0 0 0"
 					src="src/images/earth.png"
-					animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 50000">
+					animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 25000">
 				</a-sphere>
-				<a-entity id="moon" rotation="0 0 0" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 112000">
+				<a-entity id="moon" rotation="0 0 0" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 2740000">
 					<a-sphere id="moonSphere" rotation="0 0 0" radius="0.1362" color="white" position="1 0 0"
-						src="src/images/moon.jpg" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 4000"></a-sphere>
+						src="src/images/moon.jpg" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 737500"></a-sphere>
 				</a-entity>
 			</a-entity>
 		</a-entity>
 		
-		<a-entity id="mars" astro = "radius: 0.266; position: 15; rotationSun: 112000; rotationSelf: 4000"></a-entity>
-		<a-entity id="jupiter" astro = "radius: 5.605; position: 62; rotationSun: 112000; rotationSelf: 4000"></a-entity>
-		<a-entity id="saturn" astro = "radius: 4.725; position: 96; rotationSun: 112000; rotationSelf: 4000"></a-entity>
-		<a-entity id="uranus" astro = "radius: 2.05; position: 192; rotationSun: 112000; rotationSelf: 4000"></a-entity>
-		<a-entity id="neptune" astro = "radius: 1.94; position: 300; rotationSun: 112000; rotationSelf: 4000"></a-entity>
+		<a-entity id="mars" astro = "radius: 0.266; position: 15; rotationSun: 1.03; rotationSelf: 1.03"></a-entity>
+		<a-entity id="jupiter" astro = "radius: 5.605; position: 62; rotationSun: 0.415; rotationSelf: 0.414"></a-entity>
+		<a-entity id="saturn" astro = "radius: 4.725; position: 96; rotationSun: 0.445; rotationSelf: 0.444"></a-entity>
+		<!-- negative ur -->
+		<a-entity id="uranus" astro = "radius: 2.05; position: 192; rotationSun: 0.72; rotationSelf: 0.718"></a-entity>
+		<a-entity id="neptune" astro = "radius: 1.94; position: 300; rotationSun: 0.673; rotationSelf: 0.617"></a-entity>
 
 
 	</a-entity>
