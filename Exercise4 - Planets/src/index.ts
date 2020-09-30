@@ -4,7 +4,7 @@
 import {GUI} from 'dat.gui'; 
 import * as THREE from "three";
 import * as AFRAME from "aframe";
-import { AstronomicalObj } from './AstronomicalObj';
+import { ShadersLoader } from './ShadersLoader';
 
 
 //let renderer:WebGLRenderer;
@@ -13,12 +13,177 @@ let gui: GUI;
 //let scene: Scene;
 let zoom = 0.02;
 
+const sunOffset = 100
+const clock = new THREE.Clock();
+let customUniforms = {
+      baseTexture: 	{ type: "t", value: new THREE.Texture() },
+      baseSpeed:		{ type: "f", value: 0 },
+      repeatS:		{ type: "f", value: 0 },
+      repeatT:		{ type: "f", value: 0 },
+      noiseTexture:	{ type: "t", value: new THREE.Texture() },
+      noiseScale:		{ type: "f", value: 0 },
+      blendTexture:	{ type: "t", value: new THREE.Texture() },
+      blendSpeed: 	{ type: "f", value: 0 },
+      blendOffset: 	{ type: "f", value: 0 },
+      bumpTexture:	{ type: "t", value: new THREE.Texture() },
+      bumpSpeed: 		{ type: "f", value: 0 },
+      bumpScale: 		{ type: "f", value: 0 },
+      alpha: 			{ type: "f", value: 1.0 },
+      time: 			{ type: "f", value: 1.0 }
+}
+
+AFRAME.registerComponent('astro', {
+  schema: {
+    radius: {
+      type: 'number',
+      default: 1
+    },
+    position: {
+      type: 'number',
+      default: 0
+    },
+    rotationSun: {
+      type: 'number',
+      default: 112000
+    },
+    rotationSelf: {
+      type: 'number',
+      default: 4000
+    },
+},
+
+  init: function () {
+    this.el.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; easing:linear; dur: ' + this.data.rotationSun);
+    const sphere = document.createElement('a-entity');
+    sphere.setAttribute('material', 'src: #texture-' + this.el.id);
+    sphere.setAttribute('geometry', 'primitive: sphere');
+    sphere.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; easing:linear; dur: ' + this.data.rotationSelf);
+    sphere.setAttribute('position', sunOffset + this.data.position + " 0 0");
+    sphere.setAttribute('scale', this.data.radius + " " + this.data.radius + " " + this.data.radius);
+    this.el.appendChild(sphere);
+  }
+});
+
+
+AFRAME.registerComponent('sunglow', {
+  schema: {
+    material: {
+      type: 'string',
+      default: "../src/images/sun.jpg"
+    },
+    emissiveMaterial: {
+      type: 'string',
+      default: "../src/images/sun.jpg"
+    },
+    radius: {
+      type: 'number',
+      default: 1
+    },
+},
+
+  init: function () {
+    const shaders = new ShadersLoader();
+    // base image texture for mesh
+    const lavaTexture = new THREE.TextureLoader().load(this.data.material);
+    console.log(lavaTexture);
+    lavaTexture.wrapS = lavaTexture.wrapT = THREE.RepeatWrapping; 
+    // multiplier for distortion speed 		
+    const baseSpeed = 0.001;
+    // number of times to repeat texture in each direction
+    const repeatS = 4.0;
+    const repeatT = 4.0;
+    
+    // texture used to generate "randomness", distort all other textures
+    const noiseTexture = new THREE.TextureLoader().load(this.data.material);
+    noiseTexture.wrapS = noiseTexture.wrapT = THREE.RepeatWrapping; 
+    // magnitude of noise effect
+    const noiseScale = 0.1;
+    
+    // texture to additively blend with base image texture
+    const blendTexture = new THREE.TextureLoader().load(this.data.emissiveMaterial);
+    blendTexture.wrapS = blendTexture.wrapT = THREE.RepeatWrapping; 
+    // multiplier for distortion speed 
+    const blendSpeed = 0.001;
+    // adjust lightness/darkness of blended texture
+    const blendOffset = 0.15;
+
+    // texture to determine normal displacement
+    const bumpTexture = noiseTexture;
+    bumpTexture.wrapS = bumpTexture.wrapT = THREE.RepeatWrapping; 
+    // multiplier for distortion speed 		
+    const bumpSpeed   = 0.001;
+    // magnitude of normal displacement
+    const bumpScale   = 10.0;
+    
+    // use "this." to create global object
+    customUniforms = {
+      baseTexture: 	{ type: "t", value: lavaTexture },
+      baseSpeed:		{ type: "f", value: baseSpeed },
+      repeatS:		{ type: "f", value: repeatS },
+      repeatT:		{ type: "f", value: repeatT },
+      noiseTexture:	{ type: "t", value: noiseTexture },
+      noiseScale:		{ type: "f", value: noiseScale },
+      blendTexture:	{ type: "t", value: blendTexture },
+      blendSpeed: 	{ type: "f", value: blendSpeed },
+      blendOffset: 	{ type: "f", value: blendOffset },
+      bumpTexture:	{ type: "t", value: bumpTexture },
+      bumpSpeed: 		{ type: "f", value: bumpSpeed },
+      bumpScale: 		{ type: "f", value: bumpScale },
+      alpha: 			{ type: "f", value: 1.0 },
+      time: 			{ type: "f", value: 1.0 }
+    };
+    
+    // create custom material from the shader code above
+    //   that is within specially labeled script tags
+    var customMaterial = new THREE.ShaderMaterial( 
+    {
+        uniforms: customUniforms,
+        vertexShader:   document.getElementById( 'vertexShader'   ).textContent,
+        fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+    });
+
+    var ballGeometry = new AFRAME.THREE.SphereGeometry(this.data.radius, 64, 64);
+    var ball = new AFRAME.THREE.Mesh(ballGeometry, customMaterial);
+    this.el.setObject3D('mesh', ball);
+
+    var mainCamera = document.querySelector('#main-camera').object3D;
+    var customGlowMaterial = new THREE.ShaderMaterial( 
+      {
+          uniforms: 
+        { 
+          "c":   { type: "f", value: 0.8 },
+          "p":   { type: "f", value: 1.8 },
+          glowColor: { type: "c", value: new THREE.Color(0xffff00) },
+          viewVector: { type: "v3", value: mainCamera.position }
+        },
+        vertexShader:   document.getElementById( 'glowVertexShader'   ).textContent,
+        fragmentShader: document.getElementById( 'glowFragmentShader' ).textContent,
+        side: THREE.FrontSide,
+        blending: THREE.AdditiveBlending,
+        transparent: true
+      });
+      customGlowMaterial.side = THREE.BackSide;
+
+      
+      const sunglow = new AFRAME.THREE.Mesh( ballGeometry.clone(), customGlowMaterial.clone() );
+      sunglow.scale.multiplyScalar(1.3);
+      const sphere = document.createElement('a-entity');
+      sphere.setObject3D('mesh', sunglow);
+      this.el.parentElement.appendChild(sphere);
+  },
+
+  tick: function () {
+    var delta = clock.getDelta();
+	  customUniforms.time.value += delta;
+  }
+});
+
 function main() {
-  AFRAME.registerComponent('foo', main);
+  //AFRAME.registerComponent('foo', main);
 
   scene = document.querySelector('a-scene').object3D;
-  console.log(scene.isScene);
-
+  console.log("IS SCENE: ", scene.isScene);
+  
 
 //   var materials = [new THREE.MeshBasicMaterial({
 //     color: 0xFF0000
@@ -74,6 +239,7 @@ function main() {
   // animate();
 
   };
+
 
 
   

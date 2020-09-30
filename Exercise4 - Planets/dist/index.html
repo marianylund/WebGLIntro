@@ -11,76 +11,157 @@
 	<script src="bundle.js"></script>
 
 	</head>
+<!-- ---------------- Custom Shader Code ------------------------ -->
+<script id="glowVertexShader" type="x-shader/x-vertex">
+	uniform vec3 viewVector;
+	uniform float c;
+	uniform float p;
+	varying float intensity;
+	void main() 
+	{
+		vec3 vNormal = normalize( normalMatrix * normal );
+		vec3 vNormel = normalize( normalMatrix * viewVector );
+		intensity = pow( c - dot(vNormal, vNormel), p );
+		
+		gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+	}
+	</script>
+	
+	<!-- fragment shader a.k.a. pixel shader -->
+	<script id="glowFragmentShader" type="x-shader/x-vertex"> 
+	uniform vec3 glowColor;
+	varying float intensity;
+	void main() 
+	{
+		vec3 glow = glowColor * intensity;
+		gl_FragColor = vec4( glow, 1.0 );
+	}
+	</script>
+	<!-- ----------------------------------------------------------- -->
 
+
+<!-- ---------------- Custom Shader Code ------------------------ -->
+<script id="vertexShader" type="x-shader/x-vertex">
+	uniform sampler2D noiseTexture;
+	uniform float noiseScale;
+	
+	uniform sampler2D bumpTexture;
+	uniform float bumpSpeed;
+	uniform float bumpScale;
+	
+	uniform float time;
+	
+	varying vec2 vUv;
+	
+	void main() 
+	{ 
+		vUv = uv;
+		
+		vec2 uvTimeShift = vUv + vec2( 1.1, 1.9 ) * time * bumpSpeed;
+		vec4 noiseGeneratorTimeShift = texture2D( noiseTexture, uvTimeShift );
+		vec2 uvNoiseTimeShift = vUv + noiseScale * vec2( noiseGeneratorTimeShift.r, noiseGeneratorTimeShift.g );
+		// below, using uvTimeShift seems to result in more of a "rippling" effect
+		//   while uvNoiseTimeShift seems to result in more of a "shivering" effect
+		vec4 bumpData = texture2D( bumpTexture, uvTimeShift );
+	
+		// move the position along the normal
+		//  but displace the vertices at the poles by the same amount
+		float displacement = ( vUv.y > 0.999 || vUv.y < 0.001 ) ? 
+			bumpScale * (0.3 + 0.02 * sin(time)) :  
+			bumpScale * bumpData.r;
+		vec3 newPosition = position + normal * displacement;
+		
+		gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );
+	}
+	</script>
+	
+	<!-- fragment shader a.k.a. pixel shader -->
+	<script id="fragmentShader" type="x-shader/x-vertex"> 
+	uniform sampler2D baseTexture;
+	uniform float baseSpeed;
+	uniform float repeatS;
+	uniform float repeatT;
+	
+	uniform sampler2D noiseTexture;
+	uniform float noiseScale;
+	
+	uniform sampler2D blendTexture;
+	uniform float blendSpeed;
+	uniform float blendOffset;
+	
+	uniform float time;
+	uniform float alpha;
+	
+	varying vec2 vUv;
+	
+	void main() 
+	{
+		vec2 uvTimeShift = vUv + vec2( -0.7, 1.5 ) * time * baseSpeed;	
+		vec4 noiseGeneratorTimeShift = texture2D( noiseTexture, uvTimeShift );
+		vec2 uvNoiseTimeShift = vUv + noiseScale * vec2( noiseGeneratorTimeShift.r, noiseGeneratorTimeShift.b );
+		vec4 baseColor = texture2D( baseTexture, uvNoiseTimeShift * vec2(repeatS, repeatT) );
+	
+		vec2 uvTimeShift2 = vUv + vec2( 1.3, -1.7 ) * time * blendSpeed;	
+		vec4 noiseGeneratorTimeShift2 = texture2D( noiseTexture, uvTimeShift2 );
+		vec2 uvNoiseTimeShift2 = vUv + noiseScale * vec2( noiseGeneratorTimeShift2.g, noiseGeneratorTimeShift2.b );
+		vec4 blendColor = texture2D( blendTexture, uvNoiseTimeShift2 * vec2(repeatS, repeatT) ) - blendOffset * vec4(1.0, 1.0, 1.0, 1.0);
+	
+		vec4 theColor = baseColor + blendColor;
+		theColor.a = alpha;
+		gl_FragColor = theColor;
+	}  
+	</script>
+	<!-- ----------------------------------------------------------- -->
 <a-scene inspector="url: https://cdn.jsdelivr.net/gh/aframevr/aframe-inspector@master/dist/aframe-inspector.min.js">
 	<a-assets>
 		<img id="texture-sun" src="src/images/sun.jpg">
+		<img id="texture-mercury" src="src/images/mercury.jpg">
+		<img id="texture-venus" src="src/images/venus.jpg">
+		<img id="texture-earth" src="src/images/earth.png">
+		<img id="texture-moon" src="src/images/moon.jpg">
+		<img id="texture-mars" src="src/images/mars.jpg">
+		<img id="texture-jupiter" src="src/images/jupiter.jpg">
+		<img id="texture-saturn" src="src/images/saturn.jpg">
+		<img id="texture-uranus" src="src/images/uranus.jpg">
+		<img id="texture-neptune" src="src/images/neptune.jpg">
 		<img id="texture-emissive-sun" src="src/images/sun_emission.jpg">
 	</a-assets>
 
-	<a-camera cursor position="100 0 100"></a-camera>
+	<a-camera id="main-camera" cursor position="100 0 0"></a-camera>
 	<a-sky src="src/images/stars.jpg"></a-sky>
-	
+
 	<a-entity id="solar-system">
 
 		<a-entity id="sun">
-		<a-entity light="type: ambient; color: #fff; intensity: 0.2"></a-entity>
+			<a-sphere id="sunSphere" sunglow="radius: 50"></a-sphere>
 
-			<a-entity scale="50 50 50" id="sunSphere" geometry="primitive: sphere"
-          	material="src: #texture-sun;"></a-entity>
-
-		<a-light color="white" position="0 0 0" type="point" intensity="1"></a-light>
-		</a-entity>
-			
-		<a-entity id="mercury" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 112000">
-			<a-sphere id="mercurySphere" radius="0.1915" color="white" position="4 0 0"
-			src="src/images/mercury.jpg" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 4000"></a-sphere>
-		</a-entity>
-			
-		<a-entity id="venus" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 112000">
-			<a-sphere id="venusSphere" radius="0.4745" color="white" position="7 0 0"
-			src="src/images/venus.jpg" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 4000"></a-sphere>
+			<a-entity light="type: ambient; color: #fff; intensity: 0.2"></a-entity>
+			<a-light color="white" position="0 0 0" type="point" intensity="1"></a-light>
 		</a-entity>
 		
+		<a-entity id="mercury" astro = "radius: 0.1915; position: 4; rotationSun: 112000; rotationSelf: 4000"></a-entity>
+		<a-entity id="venus" astro = "radius: 0.4745; position: 7; rotationSun: 112000; rotationSelf: 4000"></a-entity>
+
 		<a-entity id="earth-and-moon" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 100000">
-			<a-entity id="earth" position="10 0 0" >
+			<a-entity id="earth" position="60 0 0" >
 				<a-sphere id="earthSphere" radius="0.5"
 					position="0 0 0"
 					rotation="0 0 0"
 					src="src/images/earth.png"
 					animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 50000">
 				</a-sphere>
-				<a-entity id="moon" rotation="0 0 0" animation="property: rotation; to: 0 360 0; loop: NaN; easing:linear; dur: 112000">
+				<a-entity id="moon" rotation="0 0 0" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 112000">
 					<a-sphere id="moonSphere" rotation="0 0 0" radius="0.1362" color="white" position="1 0 0"
 						src="src/images/moon.jpg" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 4000"></a-sphere>
 				</a-entity>
 			</a-entity>
 		</a-entity>
 		
-		<a-entity id="mars" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 112000">
-			<a-sphere id="marsSphere" radius="0.266" color="white" position="15 0 0"
-			src="src/images/mars.jpg" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 4000"></a-sphere>
-		</a-entity>
-		
-		<a-entity id="jupiter" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 112000">
-			<a-sphere id="jupiterSphere" radius="5.605" color="white" position="52 0 0"
-				src="src/images/jupiter.jpg" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 4000"></a-sphere>
-		</a-entity>
-
-		<a-entity id="saturn" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 112000">
-			<a-sphere id="saturnSphere" radius="4.725" color="white" position="96 0 0"
-				src="src/images/saturn.jpg" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 4000"></a-sphere>
-		</a-entity>
-
-		<a-entity id="uranus" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 112000">
-			<a-sphere id="uranusSphere" radius="2.05" color="white" position="192 0 0"
-				src="src/images/uranus.jpg" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 4000"></a-sphere>
-		</a-entity>
-		
-		<a-entity id="neptune" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 112000">
-			<a-sphere id="neptuneSphere" radius="1.94" color="white" position="300 0 0"
-				src="src/images/neptune.jpg" animation="property: rotation; to: 0 360 0; loop: true; easing:linear; dur: 4000"></a-sphere>
-		</a-entity>
+		<a-entity id="mars" astro = "radius: 0.266; position: 15; rotationSun: 112000; rotationSelf: 4000"></a-entity>
+		<a-entity id="jupiter" astro = "radius: 5.605; position: 62; rotationSun: 112000; rotationSelf: 4000"></a-entity>
+		<a-entity id="saturn" astro = "radius: 4.725; position: 96; rotationSun: 112000; rotationSelf: 4000"></a-entity>
+		<a-entity id="uranus" astro = "radius: 2.05; position: 192; rotationSun: 112000; rotationSelf: 4000"></a-entity>
+		<a-entity id="neptune" astro = "radius: 1.94; position: 300; rotationSun: 112000; rotationSelf: 4000"></a-entity>
 
 
 	</a-entity>
